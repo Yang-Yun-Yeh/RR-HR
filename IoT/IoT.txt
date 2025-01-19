@@ -1,0 +1,4 @@
+Raspberry pi device
+
+User name:pi
+password:riot

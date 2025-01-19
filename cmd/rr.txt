@@ -1,0 +1,17 @@
+# python environment
+conda create --name rr python=3.9
+conda activate rr
+
+pip install jupyter
+pip install numpy
+pip install pandas
+pip install matplotlib
+pip install tqdm
+pip install scipy
+pip install scikit-learn
+pip install mpld3
+pip install librosa
+pip install statsmodels
+pip install easygui
+pip install noisereduce
+pip install pyroomacoustics
