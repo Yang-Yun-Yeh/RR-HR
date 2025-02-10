@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.linear_model import LinearRegression
 
 class FIR_filter:
     def __init__(self, _coefficients):
@@ -12,6 +13,26 @@ class FIR_filter:
         self.buffer[0] = v
         return np.inner(self.buffer, self.coefficients)
     
+    # Least Mean Suqare
     def lms(self, error, mu=0.01):
         for j in range(self.ntaps):
             self.coefficients[j] = self.coefficients[j] + error * mu * self.buffer[j]
+    
+    # Least Square
+    def ls(self, x, d):
+        n, m = len(x), self.ntaps
+        A = np.zeros((n, m))
+        for i in range(n):
+            for j in range(m):
+                if i - j >= 0:
+                    A[i][j] = x[i-j]
+        
+        h_hat = np.linalg.inv(A.T @ A) @ A.T @ d
+        # print(f'h_hat:{h_hat}')
+
+        # LR with sklearn
+        reg = LinearRegression(fit_intercept=False).fit(A, d)
+        # print(f'coef:{reg.coef_}')
+
+        # self.coefficients = h_hat
+        self.coefficients = reg.coef_
