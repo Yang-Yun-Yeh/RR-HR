@@ -14,6 +14,17 @@ plt.plot(ecg)
 
 f = FIR_filter.FIR_filter(np.zeros(NTAPS))
 
+# ls
+x = np.arange(len(ecg))
+x = np.sin(2.0 * np.pi * fnoise/fs * x)
+d = ecg
+f.ls(x, d)
+LEARNING_RATE = np.max(f.coefficients) / 1e6 # / 100
+print(f'LEARNING_RATE:{LEARNING_RATE}')
+
+# exit()
+
+
 y = np.empty(len(ecg))
 for i in range((len(ecg))):
     ref_noise = np.sin(2.0 * np.pi * fnoise/fs * i)
