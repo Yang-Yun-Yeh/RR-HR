@@ -71,17 +71,16 @@ ax = fig.add_subplot(spec[row, :])
 ax.plot(np.arange(len(ecg)), d, color=colors[row])
 ax.set_title('ECG signal')
 ax.grid(True, linestyle='--', linewidth=0.5)
-# ax.set_xlabel("sample points")
 legend_handle_ls.append(Line2D([0], [0], label='d(n)', color=colors[row]))
 row += 1
 
 # x(n): sine
 end = 1000 # 1000, -1
 ax = fig.add_subplot(spec[row, :])
-ax.plot(np.arange(len(ecg))[:end], x[:end], color=colors[row])
+# ax.plot(np.arange(len(ecg))[:end], x[:end], color=colors[row])
+ax.plot(np.arange(len(ecg)), x, color=colors[row])
 ax.set_title('Reference noise: sine wave')
 ax.grid(True, linestyle='--', linewidth=0.5)
-# ax.set_xlabel("sample points")
 legend_handle_ls.append(Line2D([0], [0], label='x(n)', color=colors[row]))
 row += 1
 
@@ -90,7 +89,7 @@ for key, value in output.items():
     ax = fig.add_subplot(spec[row, :])
     ax.plot(np.arange(len(ecg)), value, color=colors[row])
     ax.set_title(key)
-    ax.set_ylim(1500, 3300)
+    # ax.set_ylim(1500, 3300)
     ax.grid(True, linestyle='--', linewidth=0.5)
     legend_handle_ls.append(Line2D([0], [0], label=key, color=colors[row]))
     row += 1
