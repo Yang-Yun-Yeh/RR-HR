@@ -42,20 +42,17 @@ for col in cols:
     x = data[sensor_names[1] + '_' + col].to_numpy() 
     f = FIR_filter.FIR_filter(np.zeros(NTAPS))
     y = np.empty(len(d))
-    coefficients_history = np.zeros((len(d), NTAPS))
 
     for i in range((len(d))):
         ref_noise = x[i]
         canceller = f.filter(ref_noise)
         output_signal = d[i] - canceller
         f.lms(output_signal, LEARNING_RATE)
-        coefficients_history[i, :] = f.coefficients
         y[i] = output_signal
     
     outputs_dict[col] = y
 
 visualize.draw_anc_curve(data, outputs=outputs_dict)
-visualize.draw_fir_coefficients_curve(coefficients_history, fs)
 
 # plt.figure(2)
 # plt.plot(y)
