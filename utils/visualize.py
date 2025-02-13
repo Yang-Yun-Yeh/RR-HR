@@ -153,47 +153,33 @@ def draw_anc_curve_multi(imu_data, outputs, sensor_names=['imu1','imu2'], cols =
 
     plt.show()
 
-def draw_fir_coefficients_curve(coefficients_history, fs):
-    NTAPS = coefficients_history.shape[1]
-    time_ls = np.arange(coefficients_history.shape[0]) / fs
-    colors = plt.cm.get_cmap('tab10', NTAPS)
-
-    legend_handle_ls = []
+def draw_fir_coefficients_curve(imu_data, coefficients, cols=['q_x', 'q_y', 'q_z', 'q_w']):
+    titles = ['$q_x$', '$q_y$', '$q_z$', '$q_w$']
     
-    max_cols = 5
-    row_num = -(-NTAPS // max_cols)
+    time_ls = imu_data.index - imu_data.index[0]
+    time_ls = time_ls.total_seconds()
     
-    fig = plt.figure(figsize=(15, 3 * (row_num + 1)), layout="constrained")
-    spec = fig.add_gridspec(row_num + 1, max_cols)
+    fig, axs = plt.subplots(2, 2, figsize=(12, 10))
+    axs = axs.flatten()
     
-    ax_ls = []
-
-    # show coefficients individually
-    for tap in range(NTAPS):
-        row, col = divmod(tap, max_cols)
-        ax = fig.add_subplot(spec[row, col])
-        ax.plot(time_ls, coefficients_history[:, tap], color=colors(tap))
-        ax.set_title("w[{}]".format(tap))
-        ax.grid(True, linestyle='--', linewidth=0.5)
-        ax_ls.append(ax)
-
-        legend_handle_ls.append(Line2D([0], [0], label="w[{}]".format(tap), color=colors(tap)))
-
-    for tap in range(NTAPS, row_num * max_cols):
-        row, col = divmod(tap, max_cols)
-        fig.delaxes(fig.axes[tap])
-
-    # show all coefficients
-    ax = fig.add_subplot(spec[row_num, :])
-    for tap in range(NTAPS):
-        ax.plot(time_ls, coefficients_history[:, tap], color=colors(tap))
-    ax.set_title("All FIR Coefficients Over Time")
-    ax.grid(True, linestyle='--', linewidth=0.5)
-    ax.set_xlabel("Time (s)")
-
-    fig.legend(handles=legend_handle_ls, loc="upper right")
+    for i, col in enumerate(cols):
+        coeffs = coefficients[col]
+        NTAPS = coeffs.shape[1]
+        colors = plt.cm.get_cmap('tab10', NTAPS)
+        
+        ax = axs[i]
+        
+        legend_handle_ls = []
+        
+        for j in range(NTAPS):
+            line, = ax.plot(time_ls, coeffs[:, j], color=colors(j), label=f'Tap {j+1}')
+            legend_handle_ls.append(line)
+        
+        ax.set_title('FIR Coefficients Over Time - ' + titles[i])
+        ax.legend(loc="upper right")
+        ax.grid(True)
     
-    # plt.savefig('output/figures/a.png')
+    plt.tight_layout()
     plt.show()
 
 if __name__ == '__main__':
