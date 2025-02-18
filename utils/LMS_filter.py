@@ -33,6 +33,10 @@ y_lms = np.empty(len(ecg))
 y_lmsls = np.empty(len(ecg))
 y_rls = np.empty(len(ecg))
 
+coefficients_history_lms = np.empty((len(d), NTAPS))
+coefficients_history_lmsls = np.empty((len(d), NTAPS))
+coefficients_history_rls = np.empty((len(d), NTAPS))
+
 for i in range((len(ecg))):
     ref_noise = np.sin(2.0 * np.pi * fnoise/fs * i)
 
@@ -47,6 +51,10 @@ for i in range((len(ecg))):
     f_lms.lms(output_signal_lms, LEARNING_RATE)
     f_lmsls.lms(output_signal_lmsls, LEARNING_RATE)
     f_rls.rls(output_signal_rls, delta=delta, lam=lam)
+
+    coefficients_history_lms[i] = f_lms.coefficients
+    coefficients_history_lmsls[i] = f_lmsls.coefficients
+    coefficients_history_rls[i] = f_rls.coefficients
 
     y_lms[i] = output_signal_lms
     y_lmsls[i] = output_signal_lmsls
@@ -98,3 +106,27 @@ ax.set_xlabel("sample points")
 fig.legend(handles=legend_handle_ls, loc="upper right")
 
 plt.show()
+
+# LMS, LMS + LS, RLS Coefficients History
+def draw_fir_coefficients_curve(coefficients_history, title):
+    fig, ax = plt.subplots(figsize=(15, 6))
+    colors = plt.cm.get_cmap('turbo', NTAPS)
+    legend_handle_ls = []
+
+    for i in range(NTAPS):
+        line, = ax.plot(np.arange(len(ecg)), coefficients_history[:, i], color=colors(i), alpha=0.7, label=f'Tap {i+1}')
+        if i < 10:
+            legend_handle_ls.append(line)
+
+    ax.set_title('FIR Coefficients Over Time - ' + title)
+    ax.set_xlabel('Sample Points')
+    ax.set_ylabel('Coefficient Value')
+    ax.legend(handles=legend_handle_ls, loc="upper right", title="Taps")
+    ax.grid(True, linestyle='--', linewidth=0.5)
+
+    plt.tight_layout()
+    plt.show()
+
+draw_fir_coefficients_curve(coefficients_history_lms, 'LMS')
+draw_fir_coefficients_curve(coefficients_history_lmsls, 'LMS + LS')
+draw_fir_coefficients_curve(coefficients_history_rls, 'RLS')
