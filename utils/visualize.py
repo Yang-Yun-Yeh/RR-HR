@@ -114,7 +114,7 @@ def draw_anc_curve_multi(imu_data, outputs, sensor_names=['imu1','imu2'], cols =
 
     time_ls = imu_data.index - imu_data.index[0]
     time_ls = time_ls.total_seconds()
-    colors = ['blue', 'orange', 'green', 'purple', 'cyan', 'deeppink']
+    colors = ['blue', 'orange', 'green', 'purple', 'cyan', 'deeppink', 'olivedrab']
     # 1:'lightsteelblue', 2:'palegreen', 3:'yellow', 4:'plum'
     legend_handle_ls = []
     

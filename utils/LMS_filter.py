@@ -11,7 +11,8 @@ fnoise = 50
 
 # RLS
 delta = 1000 # 1
-lam = 0.998 # 0.9995
+lam_rls = 0.998 # 0.9995
+lam_lrls = 0.998
 
 ecg = np.loadtxt("data_test/ecg50hz.dat")
 # plt.figure(1)
@@ -20,6 +21,7 @@ ecg = np.loadtxt("data_test/ecg50hz.dat")
 f_lms = FIR_filter.FIR_filter(np.zeros(NTAPS))
 f_lmsls = FIR_filter.FIR_filter(np.zeros(NTAPS))
 f_rls = FIR_filter.FIR_filter(np.zeros(NTAPS))
+f_lrls = FIR_filter.FIR_filter(np.zeros(NTAPS))
 
 # LS
 x = np.arange(len(ecg))
@@ -32,6 +34,7 @@ f_lmsls.ls(x, d)
 y_lms = np.empty(len(ecg))
 y_lmsls = np.empty(len(ecg))
 y_rls = np.empty(len(ecg))
+y_lrls = np.empty(len(ecg))
 
 coefficients_history_lms = np.empty((len(d), NTAPS))
 coefficients_history_lmsls = np.empty((len(d), NTAPS))
@@ -47,10 +50,11 @@ for i in range((len(ecg))):
     output_signal_lms = ecg[i] - canceller_lms
     output_signal_lmsls = ecg[i] - canceller_lmsls
     output_signal_rls = ecg[i] - canceller_rls
+    output_signal_lrls = f_lrls.lrls(x=ref_noise, d=ecg[i], N= len(ecg), lam=lam_lrls)
 
     f_lms.lms(output_signal_lms, LEARNING_RATE)
     f_lmsls.lms(output_signal_lmsls, LEARNING_RATE)
-    f_rls.rls(output_signal_rls, delta=delta, lam=lam)
+    f_rls.rls(output_signal_rls, delta=delta, lam=lam_rls)
 
     coefficients_history_lms[i] = f_lms.coefficients
     coefficients_history_lmsls[i] = f_lmsls.coefficients
@@ -59,8 +63,9 @@ for i in range((len(ecg))):
     y_lms[i] = output_signal_lms
     y_lmsls[i] = output_signal_lmsls
     y_rls[i] = output_signal_rls
+    y_lrls[i] = output_signal_lrls
 
-output = {'LMS':y_lms, 'LMS+LS':y_lmsls, 'RLS':y_rls}
+output = {'LMS':y_lms, 'LMS+LS':y_lmsls, 'RLS':y_rls, 'LRLS':y_lrls}
 
 # plt.figure(2)
 # plt.plot(y)
@@ -68,7 +73,7 @@ output = {'LMS':y_lms, 'LMS+LS':y_lmsls, 'RLS':y_rls}
 
 # Draw results
 colors = ['blue', 'red', 'orange', 'green', 'purple', 'cyan']
-row_num = 5 # 5
+row_num = 6 # 6
 row = 0
 fig = plt.figure(figsize=(15, 3 * row_num), layout="constrained")
 spec = fig.add_gridspec(row_num, 1)
