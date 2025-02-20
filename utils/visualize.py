@@ -109,7 +109,7 @@ def draw_anc_curve(imu_data, outputs, sensor_names=['imu1','imu2'], cols = ['q_x
     
     plt.show()
 
-def draw_anc_curve_multi(imu_data, outputs, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y', 'q_z', 'q_w']):
+def draw_anc_curve_multi(imu_data, outputs, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y', 'q_z', 'q_w'], overlap=True, show_gt=True):
     titles = ['$q_x$', '$q_y$', '$q_z$', '$q_w$']
 
     time_ls = imu_data.index - imu_data.index[0]
@@ -117,13 +117,23 @@ def draw_anc_curve_multi(imu_data, outputs, sensor_names=['imu1','imu2'], cols =
     colors = ['blue', 'orange', 'green', 'purple', 'cyan', 'deeppink', 'olivedrab']
     # 1:'lightsteelblue', 2:'palegreen', 3:'yellow', 4:'plum'
     legend_handle_ls = []
-    
+
     row_num = 3
+    row = 0
+    if overlap:
+        if not show_gt:
+            row_num -= 1
+    else: # not overlap
+        if not show_gt:
+            row_num += 2
+        else:
+            row_num += 3
+    
     fig = plt.figure(figsize=(15, 3 * row_num), layout="constrained")
     spec = fig.add_gridspec(row_num, len(titles))
     ax_ls = []
 
-    # show overlap
+    # show overlap (IMU)
     for i in range(len(titles)):
         ax = fig.add_subplot(spec[0, i%4])
         for k, key in enumerate(sensor_names):
@@ -132,22 +142,34 @@ def draw_anc_curve_multi(imu_data, outputs, sensor_names=['imu1','imu2'], cols =
         ax.set_title(titles[i])
     for k, key in enumerate(sensor_names):
         legend_handle_ls.append(Line2D([0], [0], label=key, color=colors[k]))
+    row += 1
 
     # show anc results
-    for i in range(len(cols)):
-        ax = fig.add_subplot(spec[1, i%4])
+    if overlap:
+        for i in range(len(cols)):
+            ax = fig.add_subplot(spec[row, i%4])
+            for k in range(len(outputs)):
+                ax.plot(time_ls, outputs[k][cols[i]], color=colors[3+k])
+            ax.set_title(titles[i])
         for k in range(len(outputs)):
-            ax.plot(time_ls, outputs[k][cols[i]], color=colors[3+k])
-        ax.set_title(titles[i])
-    for k in range(len(outputs)):
-        legend_handle_ls.append(Line2D([0], [0], label=outputs[k]['method'], color=colors[3+k]))
+            legend_handle_ls.append(Line2D([0], [0], label=outputs[k]['method'], color=colors[3+k]))
+        row += 1
+    else:
+        for k in range(len(outputs)):
+            for i in range(len(cols)):
+                ax = fig.add_subplot(spec[row, i%4])
+                ax.plot(time_ls, outputs[k][cols[i]], color=colors[3+k])
+                ax.set_title(titles[i])
+            row += 1
+            legend_handle_ls.append(Line2D([0], [0], label=outputs[k]['method'], color=colors[3+k])) 
 
     # show gt
-    ax = fig.add_subplot(spec[2, :])
-    ax.plot(time_ls, imu_data["Force"], color=colors[2])
-    ax.set_title('Respiration GT Force')
-    legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))
-            
+    if show_gt:
+        ax = fig.add_subplot(spec[row, :])
+        ax.plot(time_ls, imu_data["Force"], color=colors[2])
+        ax.set_title('Respiration GT Force')
+        legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))
+                
 
     fig.legend(handles=legend_handle_ls, loc="upper right")
 
