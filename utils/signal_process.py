@@ -8,6 +8,13 @@ try:
 except:
      import visualize as vs
 
+def align_delay(data, delay=10, fs=10):
+    gt_shift = data["Force"][int(delay * fs):].to_list()
+    data.loc[:len(gt_shift)-1, "Force"] = gt_shift
+    data = data[:len(gt_shift)-1]
+
+    return data
+
 # Low pass filer
 def butter_filter(data, cutoff=0.33, fs=10, order=4):
     nyq = 0.5 * fs
@@ -112,13 +119,13 @@ def Q_RANSAC(data_still, pool=0.5, d=0.1): # data_still: No motion duration, d:t
 def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, window=10, overlap=5, visualize=True):
     N = len(data) # Signal length in samples
     T = 1/fs # Sampling period
-    n = window * fs # lag (window size)
+    n = int(window * fs) # lag (window size)
     t = N / fs # Signal length in seconds
     flag = -10 # No freq. symbol
     print(f'f_s :{fs}, T:{T}, N:{N}, n:{n}, t:{t}')
 
     window_size = n
-    overlap_size = overlap * fs
+    overlap_size = int(overlap * fs)
     window_num = int((N - n) / (n - overlap_size)) + 1
 
     print(f'window_num:{window_num}, overlap_size:{overlap_size}, window_size:{window_size}')
@@ -205,6 +212,107 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
         vs.draw_autocorrelation_results(preds, gt, times, cols=cols)
     
     return mae
+
+# fs=10, nperseg=128, noverlap=64
+def compute_spectrogram(imu_data, fs=10, nperseg=128, noverlap=64):
+    """
+    Convert raw IMU data into spectrograms.
+    
+    Args:
+        imu_data: (num_samples, 8) raw IMU data
+        fs: Sampling frequency of IMU data (adjust as needed)
+        nperseg: Window size for STFT
+        noverlap: Overlapping samples
+        
+    Returns:
+        spectrograms: (num_samples, 8, freq_bins, time_steps)
+    """
+    num_samples, num_channels = imu_data.shape
+    spectrograms = []
+
+    for i in range(num_channels):  # Loop over 8 IMU channels
+        f, t, Sxx = sg.spectrogram(imu_data[:, i], fs=fs, nperseg=nperseg, noverlap=noverlap)
+        spectrograms.append(Sxx)  # Shape (freq_bins, time_steps)
+
+    spectrograms = np.stack(spectrograms, axis=0)  # (8, freq_bins, time_steps)
+    
+    return spectrograms
+
+def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64):
+    N = len(force_seg) # Signal length in samples
+    T = 1/fs # Sampling period
+    n = nperseg # lag
+    t = N / fs # Signal length in seconds
+    flag = -10 # No freq. symbol
+    # print(f'f_s :{fs}, T:{T}, N:{N}, n:{n}, t:{t}')
+
+    window_size = n
+    overlap_size = noverlap
+    window_num = int((N - n) / (n - overlap_size)) + 1
+
+    # print(f'window_num:{window_num}, overlap_size:{overlap_size}, window_size:{window_size}')
+
+    # Initialize
+    freqs, calrities, mae = {}, {}, {}
+    gt, times = {}, []
+
+    # Auto-correlation for gt, add times
+    gt['freq'], gt['calrity'] = [], []
+    for i in range(window_num):
+        frame_start = i * (window_size - overlap_size)
+        frame_segment = force_seg[frame_start:frame_start+window_size]
+        
+        acf = sm.tsa.acf(frame_segment, nlags=n)
+        peaks = sg.find_peaks(acf)[0] # Find peaks of the autocorrelation
+        if peaks.any():
+            lag = peaks[0] # Choose the first peak as our pitch component lag
+            pitch = fs / lag # Transform lag into frequency
+            clarity = acf[lag] / acf[0]
+            gt['freq'].append(pitch)
+            gt['calrity'].append(clarity)
+        else: # peaks is empty
+            gt['freq'].append(flag)
+            gt['calrity'].append(flag)
+        
+        times.append((frame_start + frame_start + window_size) / (2 * fs))
+
+    return gt['freq']
+
+# window_size=1000, stride=500
+# window_size=512, stride=256
+# window_size=1024, stride=256
+def segment_data(imu_data, force, window_size=128, stride=64, nperseg=128, noverlap=64, fs=10, return_t=False):
+    """
+    Create spectrogram windows from IMU data.
+
+    Args:
+        imu_data: (num_samples, 8) IMU data
+        window_size: Number of IMU samples per spectrogram window
+        stride: Step size for moving window
+        
+    Returns:
+        segmented_spectrograms: (num_windows, 8, freq_bins, time_steps)
+        segmented_gt: (num_windows, time_steps)
+    """
+    num_samples, num_channels = imu_data.shape
+    nperseg, noverlap = 128, 64
+    windows = []
+    gts = []
+    t = []
+
+    for start in range(0, num_samples - window_size, stride):
+        window_q = imu_data[start:start + window_size, :]
+        window_force = force[start:start + window_size]
+        spectrograms = compute_spectrogram(window_q, nperseg=nperseg, noverlap=noverlap)  # (8, freq_bins, time_steps)
+        gt = compute_gt(window_force, nperseg=nperseg, noverlap=noverlap)
+        windows.append(spectrograms)
+        gts.append(gt)
+        t.append((2 * start + window_size) / (2 * fs))
+        
+    if return_t:
+        return np.stack(windows, axis=0), np.stack(gts, axis=0), np.array(t)
+    else:
+        return np.stack(windows, axis=0), np.stack(gts, axis=0)  # (num_windows, 8, freq_bins, time_steps), (num_windows, time_steps)
 
 # # 測試範例
 # q_Sa = [0, 0, 0.707, 0.707]  # Sa 的初始四元數 (假設是 90 度旋轉)

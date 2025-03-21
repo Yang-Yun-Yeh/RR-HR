@@ -3,9 +3,11 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import numpy as np
 
-def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], overlap=False, show_gt=False):
-    cols = ['q_x', 'q_y', 'q_z', 'q_w']
-    titles = ['$q_x$', '$q_y$', '$q_z$', '$q_w$']
+def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y', 'q_z', 'q_w'], overlap=False, show_gt=False):
+    # titles = ['$q_x$', '$q_y$', '$q_z$', '$q_w$']
+    titles = []
+    for i in range(len(cols)):
+        titles.append(f'${cols[i]}$')
 
     time_ls = imu_data.index - imu_data.index[0]
     time_ls = time_ls.total_seconds()
@@ -24,6 +26,7 @@ def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], overlap=False, show_g
         else:
             row_num += 2
     
+    row_num += 1
     # fig, axes = plt.subplots(row_num, len(titles), figsize=(20,10), constrained_layout=True)
     fig = plt.figure(figsize=(15, 3 * row_num), layout="constrained")
     spec = fig.add_gridspec(row_num, len(titles))
@@ -58,6 +61,10 @@ def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], overlap=False, show_g
         ax.set_title('Respiration GT Force')
         legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))        
 
+    ax = fig.add_subplot(spec[4, :])
+    ax.plot(time_ls, imu_data["imu2_q_y"], color=colors[1])
+    ax.set_title('imu2_q_y')
+    
     fig.legend(handles=legend_handle_ls, loc="upper right")
     
     # plt.savefig('output/figures/a.png')
@@ -106,7 +113,10 @@ def draw_anc_curve(imu_data, outputs, sensor_names=['imu1','imu2'], cols = ['q_x
     plt.show()
 
 def draw_anc_curve_multi(imu_data, outputs, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y', 'q_z', 'q_w'], overlap=True, show_gt=True):
-    titles = ['$q_x$', '$q_y$', '$q_z$', '$q_w$']
+    # titles = ['$q_x$', '$q_y$', '$q_z$', '$q_w$']
+    titles = []
+    for i in range(len(cols)):
+        titles.append(f'${cols[i]}$')
 
     time_ls = imu_data.index - imu_data.index[0]
     time_ls = time_ls.total_seconds()
@@ -336,6 +346,92 @@ def draw_autocorrelation_results(preds, gt, times, cols=['q_x', 'q_y', 'q_z', 'q
         plt.plot(times[all_ok_idx], preds[method][all_ok_idx], marker=markers[i], label=method)
     
     plt.title("Prediction Results")
+    plt.xlabel("Time (s)")
+    plt.ylabel("RR (1/min)")
+    plt.gca().set_ylim(bottom=0)
+    plt.legend(loc='upper right')
+    plt.grid(True)
+    plt.show()
+
+# spectrograms: (channel_nums, freq_bins, time_steps)
+def plot_spectrogram(spectrograms, sensor_names=['imu1','imu2'], cols=['q_x', 'q_y', 'q_z', 'q_w']):
+    """
+    Visualizes a spectrogram.
+    
+    Args:
+        spectrogram (numpy.ndarray or torch.Tensor): 2D array of shape (freq_bins, time_steps).
+        title (str): Title of the plot.
+        cmap (str): Colormap for visualization.
+    """
+    # if isinstance(spectrogram, torch.Tensor):
+    #     spectrogram = spectrogram.cpu().numpy()  # Convert tensor to numpy
+
+    titles = []
+    for i in range(len(cols)):
+        titles.append(f'${cols[i]}$')
+
+    title = "Spectrogram"
+    cmap = "viridis"
+
+    row_num = len(sensor_names)
+    fig = plt.figure(figsize=(15, (spectrograms.shape[0] // 2) * row_num), layout="constrained")
+    spec = fig.add_gridspec(row_num, len(titles))
+    ax_ls = []
+
+    for k, key in enumerate(sensor_names):
+        if key not in sensor_names:
+            continue
+        for i in range(len(titles)):
+            ax = fig.add_subplot(spec[k, i % len(cols)])
+            a = ax.imshow(spectrograms[k * (spectrograms.shape[0] // 2) + i % len(cols)], aspect="auto", origin="lower", cmap=cmap)
+            # ax.set_xlabel("Time Steps")
+            # ax.set_ylabel("Frequency Bins")
+            ax.set_title(key + " " + titles[i])
+
+            # show color bar
+            plt.colorbar(a, ax=ax)
+    
+    fig.supxlabel('Time Steps')
+    fig.supylabel('Frequency Bins')
+    plt.show()
+
+def draw_loss_epoch(mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls):
+    colors = ['blue', 'orange']
+    titles = ['MSE loss', 'L1 loss (1/min)']
+    labels = ['train', 'test']
+    loss_ls = [[mse_train_ls, mse_test_ls], [l1_train_ls, l1_test_ls]]
+
+    fig = plt.figure(figsize=(10, 5), layout="constrained")
+    spec = fig.add_gridspec(1, len(loss_ls))
+    epoch = np.arange(1, len(mse_train_ls) + 1)
+
+    for i in range(len(loss_ls)):
+        ax = fig.add_subplot(spec[0, i])
+        for j in range(len(loss_ls[i])):
+            ax.plot(epoch, loss_ls[i][j], color=colors[j], label=labels[j])
+        ax.set_title(titles[i])
+        ax.set_ylabel('loss')
+        ax.set_xlabel('epoch')
+        ax.legend(loc="upper right")
+        ax.grid(True)
+    
+    plt.show()
+
+def draw_learning_results(preds, gt, times, action_name, cols=['q_x', 'q_y', 'q_z', 'q_w']):
+    markers = ["^", "s", "P", "*"]
+
+    fig = plt.figure(figsize=(15, 5), layout="constrained")
+    gt_ok_idx = np.where(gt > 0)[0]
+
+    plt.plot(times[gt_ok_idx], gt[gt_ok_idx], marker="o", label='gt',)
+
+    for i, method in enumerate(preds):
+        pred_ok_idx = np.where(preds[method] > 0)[0]
+        all_ok_idx = list(set(gt_ok_idx) & set(pred_ok_idx))
+        
+        plt.plot(times[all_ok_idx], preds[method][all_ok_idx], marker=markers[i], label=method)
+    
+    plt.title(f"Prediction Results: {action_name}")
     plt.xlabel("Time (s)")
     plt.ylabel("RR (1/min)")
     plt.gca().set_ylim(bottom=0)
