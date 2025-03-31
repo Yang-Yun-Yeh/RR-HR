@@ -38,6 +38,32 @@ class MLP(nn.Module):
 
         return x.squeeze(-1)  # (batch, time_steps)
     
+class CNN_1D(nn.Module):
+    def __init__(self, num_freq_bins, num_time_steps=1, num_channels=8, hidden_dim=64):
+        super(CNN_1D, self).__init__()
+
+        # 1D Convolution over frequency bins (treating time_steps as a single channel)
+        self.conv1 = nn.Conv1d(in_channels=num_channels, out_channels=32, kernel_size=3, padding=1)
+        self.relu = nn.ReLU()
+        self.conv2 = nn.Conv1d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
+        self.global_pool = nn.AdaptiveAvgPool1d(1)  # Global Pooling over frequency bins
+        self.fc = nn.Linear(64, 1)  # Fully connected layer for output
+
+    def forward(self, x):
+        batch_size, channels, freq_bins, time_steps = x.shape
+
+        x = x.squeeze(-1)  # Remove time_steps dimension -> (batch, channels, freq_bins)
+
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.conv2(x)
+        x = self.relu(x)
+
+        x = self.global_pool(x).squeeze(-1)  # Reduce frequency bins -> (batch, 64)
+        x = self.fc(x).squeeze(-1)  # Fully connected output -> (batch,)
+
+        return x.unsqueeze(-1)  # Final shape: (batch, time_steps)
+    
 # class CNN_BiLSTM(nn.Module):
 #     def __init__(self, num_freq_bins, num_time_steps, num_channels=8, hidden_dim=64):
 #         super(CNN_BiLSTM, self).__init__()
@@ -103,7 +129,7 @@ class IMUSpectrogramDataset(Dataset):
     def __getitem__(self, idx):
         return self.spectrograms[idx], self.respiration_rates[idx]
 
-def train_model(model, train_loader, test_loader, name=None, num_epochs=20, device="cuda", visualize=False):
+def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', num_epochs=20, device="cuda", visualize=False):
     model.to(device)
 
     # Best loss
@@ -180,16 +206,16 @@ def train_model(model, train_loader, test_loader, name=None, num_epochs=20, devi
         # Save model
         if avg_l1_loss_test < l1_test_best:
             l1_test_best = avg_l1_loss_test
-            torch.save(model.state_dict(), f'./models/{str(name)}.pt')
+            torch.save(model.state_dict(), f'./{ckpt_dir}/{str(name)}.pt')
             # print("Best model saved!")
         
         print(f"Epoch {epoch+1}/{num_epochs}, Train MSE: {avg_mse_loss_train:.4f}, L1: {avg_l1_loss_train:.4f}, Test MSE: {avg_mse_loss_test:.4f}, L1: {avg_l1_loss_test:.4f}")
 
     # draw results
     if visualize:
-        vs.draw_loss_epoch(mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls)
+        vs.draw_loss_epoch(mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls, name=name)
 
-def evaluate_model(model, test_loader, device="cuda"):
+def evaluate_model(model, test_loader, model_name='model', device="cuda"):
     model.to(device)
     model.eval()  # Set model to evaluation mode
 
@@ -219,7 +245,7 @@ def evaluate_model(model, test_loader, device="cuda"):
     avg_mse_loss = total_mse_loss / num_batches
     avg_l1_loss = 60 * total_l1_loss / num_batches
 
-    print(f"Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min")
+    print(f"{model_name} Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min")
     return avg_mse_loss, avg_l1_loss
 
 def evaluate_model_file(model, file_loader, device="cuda", gt=None, times=None, visualize=True, action_name=None):
@@ -261,4 +287,56 @@ def evaluate_model_file(model, file_loader, device="cuda", gt=None, times=None, 
         vs.draw_learning_results(preds, 60 * gt, times, action_name)
 
     print(f"Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min")
+    return avg_mse_loss, avg_l1_loss, preds
+
+def evaluate_models_file(models, file_loader, models_name, device="cuda", gt=None, times=None, visualize=True, action_name=None):
+    avg_mse_loss_ls = []
+    avg_l1_loss_ls = []
+    preds = {}
+
+    for i in range(len(models)):
+        model = models[i]
+        model_name = models_name[i]
+
+        model.to(device)
+        model.eval()  # Set model to evaluation mode
+
+        criterion_mse = nn.MSELoss()
+        criterion_l1 = nn.L1Loss()
+
+        total_mse_loss = 0
+        total_l1_loss = 0
+        num_batches = 0
+
+        pred = []
+
+        with torch.no_grad():  # No gradient computation during evaluation
+            for spectrograms, respiration_rates in file_loader:
+                spectrograms, respiration_rates = spectrograms.to(device), respiration_rates.to(device)
+
+                # Forward pass
+                outputs = model(spectrograms)  # Shape: (batch, time_steps)
+                pred.append(60 * outputs.cpu().numpy()[0][0])
+
+                # Compute losses
+                mse_loss = criterion_mse(outputs, respiration_rates)
+                l1_loss = criterion_l1(outputs, respiration_rates)
+
+                total_mse_loss += mse_loss.item()
+                total_l1_loss += l1_loss.item()
+                num_batches += 1
+
+        # Compute average loss over all batches
+        avg_mse_loss = total_mse_loss / num_batches
+        avg_l1_loss = 60 * total_l1_loss / num_batches
+        print(f"{model_name} Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min")
+
+        avg_mse_loss_ls.append(avg_mse_loss)
+        avg_l1_loss_ls.append(avg_l1_loss)
+
+        preds[model_name] = np.array(pred)
+
+    if visualize:
+        vs.draw_learning_results(preds, 60 * gt, times, action_name)
+
     return avg_mse_loss, avg_l1_loss, preds
