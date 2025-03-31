@@ -15,5 +15,9 @@ pip install statsmodels
 pip install easygui
 pip install noisereduce
 pip install pyroomacoustics
-
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+
+command:
+python generate_dataset.py -f data/hamham -n dataset/hamham
+python train.py --dataset_name hamham --visualize
+python test.py --dataset_name hamham --model_name 0327_MLP --model_type MLP

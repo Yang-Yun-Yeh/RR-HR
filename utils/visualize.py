@@ -395,7 +395,7 @@ def plot_spectrogram(spectrograms, sensor_names=['imu1','imu2'], cols=['q_x', 'q
     fig.supylabel('Frequency Bins')
     plt.show()
 
-def draw_loss_epoch(mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls):
+def draw_loss_epoch(mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls, name="model"):
     colors = ['blue', 'orange']
     titles = ['MSE loss', 'L1 loss (1/min)']
     labels = ['train', 'test']
@@ -415,6 +415,7 @@ def draw_loss_epoch(mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls):
         ax.legend(loc="upper right")
         ax.grid(True)
     
+    plt.savefig(f'models/fig/{name}.png')
     plt.show()
 
 def draw_learning_results(preds, gt, times, action_name, cols=['q_x', 'q_y', 'q_z', 'q_w']):
@@ -438,6 +439,26 @@ def draw_learning_results(preds, gt, times, action_name, cols=['q_x', 'q_y', 'q_
     plt.legend(loc='upper right')
     plt.grid(True)
     plt.show()
+
+def draw_acf(acf, lag):
+    plt.figure(figsize=(10, 6))
+    colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'orange']
+    # labels = [f'Sensor {i+1}' for i in range(8)]
+
+    # for i in range(8):
+    #     plt.plot(time, data[:, i], marker='o', linestyle='-', color=colors[i % len(colors)], label=labels[i])
+
+    time = np.arange(len(acf))
+    plt.plot(time, acf, marker='o', linestyle='-', color=colors[0], label="acf")
+    plt.plot(time[lag], acf[lag], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="red")
+
+    plt.xlabel("index")
+    plt.ylabel("acf")
+    plt.title("ACF")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
 
 if __name__ == '__main__':
     file_path = "./data_test/sit_4.csv"

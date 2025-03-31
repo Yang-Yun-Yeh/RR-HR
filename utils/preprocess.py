@@ -7,7 +7,7 @@ try:
 except:
      import signal_process as sp
 
-def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.1):
+def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.1, window_size=128, stride=64, nperseg=128, noverlap=64):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     q_col_ls = []
@@ -64,7 +64,7 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
 
             # Q: (sample_num, channel_num)
             Q = data_sml[q_col_ls].values
-            segmented_spectrograms, segmented_gt = sp.segment_data(Q, data_sml["Force"])
+            segmented_spectrograms, segmented_gt = sp.segment_data(Q, data_sml["Force"], window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap)
             # print(f'sepctrograms:{segmented_spectrograms.shape}')
             # print(f'gt:{segmented_gt.shape}')
             spectrograms.append(segmented_spectrograms)
