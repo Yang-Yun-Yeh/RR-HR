@@ -14,9 +14,11 @@ if __name__ == '__main__':
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Test one file
-    action_name = "walk_stand_3"
-    # sit_3,  stand_3, walk_stand_3, run_stand_3
-    path_file = f'./data/3_19/test/{action_name}.csv'
+    action_name = "mix_3"
+    # sit,  stand, walk_stand, run_stand, mix
+    path_file = f'./data/hamham/test/{action_name}.csv'
+    # action_name = "walk_stand_0328_0236"
+    # path_file = f'./data/3_28/{action_name}.csv'
 
     spectrograms_file, gts_file, times_file = prepare_file(path_file)
     dataset_file= IMUSpectrogramDataset(spectrograms_file, gts_file)

@@ -126,7 +126,7 @@ def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_p
     data_sml = data_sml[still_pt+after_still_pt:]
     cols = ['q_x', 'q_y', 'q_z', 'q_w'] # for quaternion
 
-    data_sml.loc[:, "Force"] = sp.butter_filter(data_sml["Force"], cutoff=0.66)
+    # data_sml.loc[:, "Force"] = sp.butter_filter(data_sml["Force"], cutoff=1) # cutoff=0.66
 
     # Q: (sample_num, channel_num)
     Q = data_sml[q_col_ls].values

@@ -146,12 +146,26 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
         frame_segment = data['Force'][frame_start:frame_start+window_size]
         
         acf = sm.tsa.acf(frame_segment, nlags=n)
+        acf_filtered = butter_filter(acf, cutoff=1) # cutoff=0.66
+        peaks = sg.find_peaks(acf_filtered)[0]
         # peaks = sg.find_peaks(acf)[0] # Find peaks of the autocorrelation
-        peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
+        # peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
         if peaks.any():
             lag = peaks[0] # Choose the first peak as our pitch component lag
             pitch = fs / lag # Transform lag into frequency
-            clarity = acf[lag] / acf[0]
+            clarity = acf_filtered[lag] / acf_filtered[0]
+
+            peak_id = 0
+            threshold = -0.1
+            while (clarity < threshold or pitch*60 > 40) and peak_id < len(peaks):
+                lag = peaks[peak_id]
+                pitch = fs / lag
+                clarity = acf_filtered[lag] / acf_filtered[0]
+                peak_id += 1
+            
+            if clarity < threshold:
+                pitch = flag
+
             gt['freq'].append(pitch * 60)
             gt['calrity'].append(clarity)
         else: # peaks is empty
@@ -168,12 +182,25 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
                 frame_segment = outputs[i][col][frame_start:frame_start+window_size]
         
                 acf = sm.tsa.acf(frame_segment, nlags=n)
+                acf_filtered = butter_filter(acf, cutoff=1) # cutoff=0.66
+                peaks = sg.find_peaks(acf_filtered)[0]
                 # peaks = sg.find_peaks(acf)[0] # Find peaks of the autocorrelation
-                peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
+                # peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
                 if peaks.any():
                     lag = peaks[0] # Choose the first peak as our pitch component lag
                     pitch = fs / lag # Transform lag into frequency
-                    clarity = acf[lag] / acf[0]
+                    clarity = acf_filtered[lag] / acf_filtered[0]
+
+                    peak_id = 0
+                    threshold = -0.1
+                    while (clarity < threshold or pitch*60 > 40) and peak_id < len(peaks):
+                        lag = peaks[peak_id]
+                        pitch = fs / lag
+                        clarity = acf_filtered[lag] / acf_filtered[0]
+                        peak_id += 1
+                    
+                    if clarity < threshold:
+                        pitch = flag
                     freqs[method][col].append(pitch * 60)
                     calrities[method][col].append(clarity)
                 else: # peaks is empty
@@ -260,27 +287,42 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64):
 
     # Auto-correlation for gt, add times
     gt['freq'], gt['calrity'] = [], []
-    # has_draw = [False]
+    has_draw = [False]
     for i in range(window_num):
         frame_start = i * (window_size - overlap_size)
         frame_segment = force_seg[frame_start:frame_start+window_size]
         
         acf = sm.tsa.acf(frame_segment, nlags=n)
+        acf_filtered = butter_filter(acf, cutoff=1) # cutoff=0.66
+        peaks = sg.find_peaks(acf_filtered)[0]
         # peaks = sg.find_peaks(acf)[0] # Find peaks of the autocorrelation
-        peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
+        # peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
+        # peaks = sg.find_peaks(acf, height=np.median(acf) / 3)[0]
         if peaks.any():
             lag = peaks[0] # Choose the first peak as our pitch component lag
             pitch = fs / lag # Transform lag into frequency
-            clarity = acf[lag] / acf[0]
-            # if pitch * 60 > 30:
-            #     vs.draw_acf(acf, lag)
-            #     print(clarity)
+            clarity = acf_filtered[lag] / acf_filtered[0]
+
+            peak_id = 0
+            threshold = -0.1
+            while (clarity < threshold or pitch*60 > 40) and peak_id < len(peaks):
+                lag = peaks[peak_id]
+                pitch = fs / lag
+                clarity = acf_filtered[lag] / acf_filtered[0]
+                peak_id += 1
+            
+            if clarity < threshold:
+                pitch = flag
+
+            if pitch * 60 > 29 or pitch * 60 < 10:
+                vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
+                print(clarity)
 
             # print(has_draw[0])
             # print(i)
             # if not has_draw[0]:
             #     has_draw[0] = True
-            #     vs.draw_acf(acf, lag)
+            #     vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
             #     print(clarity)
                 
             gt['freq'].append(pitch)
