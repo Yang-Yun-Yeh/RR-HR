@@ -419,7 +419,7 @@ def draw_loss_epoch(mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls, name="mo
     plt.show()
 
 def draw_learning_results(preds, gt, times, action_name, cols=['q_x', 'q_y', 'q_z', 'q_w']):
-    markers = ["^", "s", "P", "*"]
+    markers = ["^", "s", "P", "*", "o", "D", "v", "X", "h", "+", "x", "|", "_"]
 
     fig = plt.figure(figsize=(15, 5), layout="constrained")
     gt_ok_idx = np.where(gt > 0)[0]
