@@ -146,12 +146,26 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
         frame_segment = data['Force'][frame_start:frame_start+window_size]
         
         acf = sm.tsa.acf(frame_segment, nlags=n)
+        acf_filtered = butter_filter(acf, cutoff=1) # cutoff=0.66
+        peaks = sg.find_peaks(acf_filtered)[0]
         # peaks = sg.find_peaks(acf)[0] # Find peaks of the autocorrelation
-        peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
+        # peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
         if peaks.any():
             lag = peaks[0] # Choose the first peak as our pitch component lag
             pitch = fs / lag # Transform lag into frequency
-            clarity = acf[lag] / acf[0]
+            clarity = acf_filtered[lag] / acf_filtered[0]
+
+            peak_id = 0
+            threshold = -0.1
+            while (clarity < threshold or pitch*60 > 30) and peak_id < len(peaks):
+                lag = peaks[peak_id]
+                pitch = fs / lag
+                clarity = acf_filtered[lag] / acf_filtered[0]
+                peak_id += 1
+            
+            if clarity < threshold:
+                pitch = flag
+
             gt['freq'].append(pitch * 60)
             gt['calrity'].append(clarity)
         else: # peaks is empty
@@ -168,12 +182,25 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
                 frame_segment = outputs[i][col][frame_start:frame_start+window_size]
         
                 acf = sm.tsa.acf(frame_segment, nlags=n)
+                acf_filtered = butter_filter(acf, cutoff=1) # cutoff=0.66
+                peaks = sg.find_peaks(acf_filtered)[0]
                 # peaks = sg.find_peaks(acf)[0] # Find peaks of the autocorrelation
-                peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
+                # peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
                 if peaks.any():
                     lag = peaks[0] # Choose the first peak as our pitch component lag
                     pitch = fs / lag # Transform lag into frequency
-                    clarity = acf[lag] / acf[0]
+                    clarity = acf_filtered[lag] / acf_filtered[0]
+
+                    peak_id = 0
+                    threshold = -0.1
+                    while (clarity < threshold or pitch*60 > 40) and peak_id < len(peaks):
+                        lag = peaks[peak_id]
+                        pitch = fs / lag
+                        clarity = acf_filtered[lag] / acf_filtered[0]
+                        peak_id += 1
+                    
+                    if clarity < threshold:
+                        pitch = flag
                     freqs[method][col].append(pitch * 60)
                     calrities[method][col].append(clarity)
                 else: # peaks is empty
@@ -231,6 +258,7 @@ def compute_spectrogram(imu_data, fs=10, nperseg=128, noverlap=64):
     """
     num_samples, num_channels = imu_data.shape
     spectrograms = []
+    # print(f'nperseg:{nperseg}, noverlap:{noverlap}')
 
     for i in range(num_channels):  # Loop over 8 IMU channels
         f, t, Sxx = sg.spectrogram(imu_data[:, i], fs=fs, nperseg=nperseg, noverlap=noverlap)
@@ -240,7 +268,7 @@ def compute_spectrogram(imu_data, fs=10, nperseg=128, noverlap=64):
     
     return spectrograms
 
-def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64):
+def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64, start_t=0, return_t=False):
     N = len(force_seg) # Signal length in samples
     T = 1/fs # Sampling period
     n = nperseg # lag
@@ -266,21 +294,36 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64):
         frame_segment = force_seg[frame_start:frame_start+window_size]
         
         acf = sm.tsa.acf(frame_segment, nlags=n)
+        acf_filtered = butter_filter(acf, cutoff=1) # cutoff=0.66
+        peaks = sg.find_peaks(acf_filtered)[0]
         # peaks = sg.find_peaks(acf)[0] # Find peaks of the autocorrelation
-        peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
+        # peaks = sg.find_peaks(acf, height=np.median(acf) / 3, distance=fs)[0]
+        # peaks = sg.find_peaks(acf, height=np.median(acf) / 3)[0]
         if peaks.any():
             lag = peaks[0] # Choose the first peak as our pitch component lag
             pitch = fs / lag # Transform lag into frequency
-            clarity = acf[lag] / acf[0]
-            # if pitch * 60 > 30:
-            #     vs.draw_acf(acf, lag)
+            clarity = acf_filtered[lag] / acf_filtered[0]
+
+            peak_id = 0
+            threshold = -0.1
+            while (clarity < threshold or pitch*60 > 30) and peak_id < len(peaks):
+                lag = peaks[peak_id]
+                pitch = fs / lag
+                clarity = acf_filtered[lag] / acf_filtered[0]
+                peak_id += 1
+            
+            if clarity < threshold:
+                pitch = flag
+
+            # if pitch * 60 > 28 or pitch * 60 < 10:
+            #     vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
             #     print(clarity)
 
             # print(has_draw[0])
             # print(i)
             # if not has_draw[0]:
             #     has_draw[0] = True
-            #     vs.draw_acf(acf, lag)
+            #     vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
             #     print(clarity)
                 
             gt['freq'].append(pitch)
@@ -289,14 +332,17 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64):
             gt['freq'].append(flag)
             gt['calrity'].append(flag)
         
-        times.append((frame_start + frame_start + window_size) / (2 * fs))
+        times.append((start_t + (frame_start + frame_start + window_size)/2) / fs)
 
-    return gt['freq']
+    if not return_t:
+        return gt['freq']
+    else:
+        return gt['freq'], times
 
 # window_size=1000, stride=500
 # window_size=512, stride=256
 # window_size=1024, stride=256
-def segment_data(imu_data, force, window_size=128, stride=64, nperseg=128, noverlap=64, fs=10, return_t=False):
+def segment_data(imu_data, force, window_size=128, stride=64, nperseg=128, noverlap=64, fs=10, return_t=False, out_1=False):
     """
     Create spectrogram windows from IMU data.
 
@@ -310,22 +356,25 @@ def segment_data(imu_data, force, window_size=128, stride=64, nperseg=128, nover
         segmented_gt: (num_windows, time_steps)
     """
     num_samples, num_channels = imu_data.shape
-    nperseg, noverlap = 128, 64
+    # nperseg, noverlap = 128, 64
     windows = []
     gts = []
-    t = []
+    t_ls = []
 
     for start in range(0, num_samples - window_size, stride):
         window_q = imu_data[start:start + window_size, :]
         window_force = force[start:start + window_size]
         spectrograms = compute_spectrogram(window_q, nperseg=nperseg, noverlap=noverlap)  # (8, freq_bins, time_steps)
-        gt = compute_gt(window_force, nperseg=nperseg, noverlap=noverlap)
+        if not out_1:
+            gt, t = compute_gt(window_force, nperseg=nperseg, noverlap=noverlap, start_t=start, return_t=True)
+        else:
+            gt, t = compute_gt(window_force, nperseg=window_size, noverlap=0, start_t=start, return_t=True)
         windows.append(spectrograms)
         gts.append(gt)
-        t.append((2 * start + window_size) / (2 * fs))
+        t_ls.append(t)
         
     if return_t:
-        return np.stack(windows, axis=0), np.stack(gts, axis=0), np.array(t)
+        return np.stack(windows, axis=0), np.stack(gts, axis=0), np.stack(t_ls, axis=0)
     else:
         return np.stack(windows, axis=0), np.stack(gts, axis=0)  # (num_windows, 8, freq_bins, time_steps), (num_windows, time_steps)
 

@@ -23,6 +23,7 @@ def parse_args():
     parser.add_argument("--stride", type=int, default=64)
     parser.add_argument("--nperseg", type=int, default=128)
     parser.add_argument("--noverlap", type=int, default=64)
+    parser.add_argument("--out_1", action='store_true')
     
     
     args = parser.parse_args()
@@ -49,7 +50,8 @@ if __name__ == '__main__':
                                          window_size=args.window_size,
                                          stride=args.stride,
                                          nperseg=args.nperseg,
-                                         noverlap=args.noverlap)
+                                         noverlap=args.noverlap,
+                                         out_1=args.out_1)
 
         pickle.dump(
             {'input': spectrograms, 'gt': gts},

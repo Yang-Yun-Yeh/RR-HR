@@ -440,23 +440,46 @@ def draw_learning_results(preds, gt, times, action_name, cols=['q_x', 'q_y', 'q_
     plt.grid(True)
     plt.show()
 
-def draw_acf(acf, lag):
-    plt.figure(figsize=(10, 6))
+def draw_acf(acf, lag, frame_segment, fs=10, acf_filtered=None):
+    # plt.figure(figsize=(10, 6))
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'orange']
-    # labels = [f'Sensor {i+1}' for i in range(8)]
-
-    # for i in range(8):
-    #     plt.plot(time, data[:, i], marker='o', linestyle='-', color=colors[i % len(colors)], label=labels[i])
-
+ 
     time = np.arange(len(acf))
-    plt.plot(time, acf, marker='o', linestyle='-', color=colors[0], label="acf")
-    plt.plot(time[lag], acf[lag], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="red")
+    # plt.plot(time, acf, marker='o', linestyle='-', color=colors[0], label="acf")
+    # plt.plot(time[lag], acf[lag], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="red")
 
-    plt.xlabel("index")
-    plt.ylabel("acf")
-    plt.title("ACF")
-    plt.legend()
-    plt.grid()
+    # plt.xlabel("index")
+    # plt.ylabel("acf")
+    # plt.title("ACF")
+    # plt.legend()
+    # plt.grid()
+    # plt.show()
+
+    # Create a figure with 2 rows and 1 column of subplots
+    fig, ax = plt.subplots(2, 1, figsize=(10, 6))
+
+    # Plot on the first subplot
+    ax[0].plot(time / fs, frame_segment, label='force', color=colors[1])
+    ax[0].set_title('RR Force')
+    ax[0].set_ylabel('rr force')
+    ax[0].legend()
+    ax[0].grid(True)
+
+    # Plot on the second subplot
+    ax[1].plot(time, acf, marker='o', linestyle='-', color=colors[0], label="acf")
+    if acf_filtered is not None:
+        ax[1].plot(time, acf_filtered, marker='o', linestyle='-', color=colors[1], label="acf_filtered")
+        ax[1].plot(time[lag], acf_filtered[lag], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="red")
+    else:
+        ax[1].plot(time[lag], acf[lag], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="red")
+    ax[1].set_title('ACF')
+    ax[1].set_xlabel('index')
+    ax[1].set_ylabel('acf')
+    ax[1].legend()
+    ax[1].grid(True)
+
+    # Adjust layout
+    plt.tight_layout()
     plt.show()
 
 

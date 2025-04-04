@@ -36,6 +36,10 @@ class MLP(nn.Module):
         x = self.relu(x)
         x = self.fc3(x)  # (batch, time_steps, 1)
 
+        # print(f'x.shape: {x.shape}')
+        # print(f'x.squeeze(-1): {x.squeeze(-1).shape}')
+        # exit()
+
         return x.squeeze(-1)  # (batch, time_steps)
     
 class CNN_1D(nn.Module):
@@ -63,6 +67,63 @@ class CNN_1D(nn.Module):
         x = self.fc(x).squeeze(-1)  # Fully connected output -> (batch,)
 
         return x.unsqueeze(-1)  # Final shape: (batch, time_steps)
+
+class MLP_out1(nn.Module):
+    def __init__(self, num_freq_bins, num_time_steps, num_channels=8, hidden_dim=512): # hidden_dim=128
+        super(MLP_out1, self).__init__()
+
+        input_dim = num_channels * num_freq_bins * num_time_steps  # Flattened input
+
+        # Fully connected layers
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.relu = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim // 2)
+        self.fc3 = nn.Linear(hidden_dim // 2, 1)  # Output one global value
+
+    def forward(self, x):
+        batch_size = x.shape[0]
+
+        # Flatten all but batch dimension
+        x = x.view(batch_size, -1)  # (batch_size, features)
+
+        # Fully connected layers
+        x = self.fc1(x)
+        x = self.relu(x)
+        x = self.fc2(x)
+        x = self.relu(x)
+        x = self.fc3(x)  # (batch_size, 1)
+
+        # print(f'x.shape: {x.shape}')
+        # exit()
+
+        return x  # (batch_size, 1)
+     
+class CNN_out1(nn.Module):
+    def __init__(self, num_channels=8, hidden_dim=64):
+        super(CNN_out1, self).__init__()
+
+        # 2D CNN feature extractor (operates on (freq_bins, time_steps))
+        self.conv1 = nn.Conv2d(in_channels=num_channels, out_channels=32, kernel_size=3, padding=1)
+        self.relu = nn.ReLU()
+        self.conv2 = nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
+        self.global_pool = nn.AdaptiveAvgPool2d(1)  # Global pooling to (1,1) per channel
+        self.fc = nn.Linear(64, 1)  # Fully connected layer for output
+
+    def forward(self, x):
+        batch_size = x.shape[0]  # (batch_size, 8, freq_bins, time_steps)
+        # print(f'x.shape: {x.shape}')
+        x = self.conv1(x)
+        x = self.relu(x)
+        x = self.conv2(x)
+        x = self.relu(x)
+
+        x = self.global_pool(x).squeeze(-1).squeeze(-1)  # Reduce to (batch_size, 64)
+        # x = self.fc(x).squeeze(-1)  # Fully connected output -> (batch_size, 1)
+        x = self.fc(x)
+        # print(f'x.shape: {x.shape}')
+        # exit()
+
+        return x
 
 class BiLSTM(nn.Module):
     def __init__(self, num_freq_bins, num_time_steps, num_channels=8, hidden_dim=512):
@@ -311,6 +372,7 @@ def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', 
 
     # draw results
     if visualize:
+        # pass
         vs.draw_loss_epoch(mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls, name=name)
 
 def evaluate_model(model, test_loader, model_name='model', device="cuda"):
@@ -346,7 +408,7 @@ def evaluate_model(model, test_loader, model_name='model', device="cuda"):
     print(f"{model_name} Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min")
     return avg_mse_loss, avg_l1_loss
 
-def evaluate_model_file(model, file_loader, device="cuda", gt=None, times=None, visualize=True, action_name=None):
+def evaluate_model_file(model, file_loader, model_name, device="cuda", gt=None, times=None, visualize=True, action_name=None):
     model.to(device)
     model.eval()  # Set model to evaluation mode
 
@@ -379,7 +441,7 @@ def evaluate_model_file(model, file_loader, device="cuda", gt=None, times=None, 
     avg_mse_loss = total_mse_loss / num_batches
     avg_l1_loss = 60 * total_l1_loss / num_batches
 
-    preds = {"Spectrogram + MLP": np.array(pred)}
+    preds = {model_name: np.array(pred)}
 
     if visualize:
         vs.draw_learning_results(preds, 60 * gt, times, action_name)

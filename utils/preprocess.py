@@ -7,7 +7,7 @@ try:
 except:
      import signal_process as sp
 
-def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.1, window_size=128, stride=64, nperseg=128, noverlap=64):
+def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.1, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     q_col_ls = []
@@ -60,11 +60,11 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
             data_sml = data_sml[still_pt+after_still_pt:]
             cols = ['q_x', 'q_y', 'q_z', 'q_w'] # for quaternion
 
-            data_sml.loc[:, "Force"] = sp.butter_filter(data_sml["Force"], cutoff=0.66)
+            # data_sml.loc[:, "Force"] = sp.butter_filter(data_sml["Force"], cutoff=1) # cutoff=0.66
 
             # Q: (sample_num, channel_num)
             Q = data_sml[q_col_ls].values
-            segmented_spectrograms, segmented_gt = sp.segment_data(Q, data_sml["Force"], window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap)
+            segmented_spectrograms, segmented_gt = sp.segment_data(Q, data_sml["Force"], window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1)
             # print(f'sepctrograms:{segmented_spectrograms.shape}')
             # print(f'gt:{segmented_gt.shape}')
             spectrograms.append(segmented_spectrograms)
@@ -79,7 +79,7 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
 
     return spectrograms, gts
 
-def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.1):
+def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.1, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     q_col_ls = []
@@ -126,11 +126,11 @@ def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_p
     data_sml = data_sml[still_pt+after_still_pt:]
     cols = ['q_x', 'q_y', 'q_z', 'q_w'] # for quaternion
 
-    data_sml.loc[:, "Force"] = sp.butter_filter(data_sml["Force"], cutoff=0.66)
+    # data_sml.loc[:, "Force"] = sp.butter_filter(data_sml["Force"], cutoff=1) # cutoff=0.66
 
     # Q: (sample_num, channel_num)
     Q = data_sml[q_col_ls].values
-    segmented_spectrograms, segmented_gt, times = sp.segment_data(Q, data_sml["Force"], return_t=True)
+    segmented_spectrograms, segmented_gt, times = sp.segment_data(Q, data_sml["Force"], return_t=True, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1)
     # print(f'sepctrograms:{segmented_spectrograms.shape}')
     # print(f'gt:{segmented_gt.shape}')
     spectrograms.append(segmented_spectrograms)

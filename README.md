@@ -22,15 +22,30 @@ python visualize_data.py
 
 ### Step.1 Generate training, test set:
 ```
+# 1-D Spectrogram
 python generate_dataset.py -f data/hamham -n dataset/hamham
+```
+```
+# 2-D Spectrogram
+python generate_dataset.py -f data/hamham -n dataset/hamham_out1 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1
 ```
 
 ### Step.2 Train model:
 ```
-python train.py --dataset_name hamham --visualize
+# 1-D Spectrogram
+python train.py --dataset_name hamham --model_name MLP_1D --visualize
+```
+```
+# 2-D Spectrogram
+python train.py --dataset_name hamham_out1 --model_name CNN_out1 --model_type CNN --visualize
 ```
 
 ### Step.3 Test model:
 ```
-python test.py --dataset_name hamham --model_name 0327_MLP --model_type MLP
+# 1-D Spectrogram
+python test.py --dataset_name hamham --model_name MLP_1D --model_type MLP
+```
+```
+# 2-D Spectrogram
+python test.py --dataset_name hamham_out1 --model_name CNN_out1 --model_type CNN
 ```
