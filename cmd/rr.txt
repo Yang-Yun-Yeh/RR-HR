@@ -19,5 +19,16 @@ pip3 install torch torchvision torchaudio --index-url https://download.pytorch.o
 
 command:
 python generate_dataset.py -f data/hamham -n dataset/hamham
-python train.py --dataset_name hamham --visualize
-python test.py --dataset_name hamham --model_name 0327_MLP --model_type MLP
+python train.py --dataset_name hamham --model_name MLP_1D --visualize
+python test.py --dataset_name hamham --model_name MLP_1D --model_type MLP
+
+python train.py --dataset_name hamham --model_name CNN_1D --model_type CNN --visualize
+python test.py --dataset_name hamham --model_name CNN_1D --model_type CNN
+
+# out_1
+python generate_dataset.py -f data/hamham -n dataset/hamham_out1 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1
+python train.py --dataset_name hamham_out1 --model_name MLP_out1 --visualize
+python test.py --dataset_name hamham_out1 --model_name MLP_out1 --model_type MLP
+
+python train.py --dataset_name hamham_out1 --model_name CNN_out1 --model_type CNN --visualize
+python test.py --dataset_name hamham_out1 --model_name CNN_out1 --model_type CNN

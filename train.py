@@ -59,11 +59,14 @@ if __name__ == '__main__':
 
     if args.model_type == "MLP":
         model = MLP(num_freq_bins, num_time_steps, num_channels=num_channels)
-        # model = CNN_1D(num_freq_bins, num_time_steps, num_channels=num_channels)
+        # model = MLP_out1(num_freq_bins, num_time_steps, num_channels=num_channels)
+    elif args.model_type == "CNN":
+        model = CNN_1D(num_freq_bins, num_time_steps, num_channels=num_channels)
+        # model = CNN_out1(num_channels=num_channels)
 
     # Train the model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     now = datetime.now()
     if args.model_name == "model":
         model_name = now.strftime("%m%d_%H.%M.%S") # MM_DD_HH:mm:ss
-    train_model(model, train_loader, test_loader, num_epochs=args.num_epoch, name=model_name, ckpt_dir=args.ckpt_dir, device=device,visualize=args.visualize)
+    train_model(model, train_loader, test_loader, num_epochs=args.num_epoch, name=args.model_name, ckpt_dir=args.ckpt_dir, device=device,visualize=args.visualize)
