@@ -8,8 +8,8 @@ from torch.utils.data import Dataset, DataLoader
 
 if __name__ == '__main__':
     # Load model
-    model = MLP(65, 1, num_channels=8)
-    model_name = "0327_MLP"
+    model = MLP(65, 1, num_channels=16)
+    model_name = "MLP_16_1D"
     model.load_state_dict(torch.load(f'./models/{str(model_name)}.pt'))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
