@@ -41,17 +41,18 @@ class MLP(nn.Module):
         # exit()
 
         return x.squeeze(-1)  # (batch, time_steps)
-    
+
+# conv1_out=32, hidden_dim=64
 class CNN_1D(nn.Module):
-    def __init__(self, num_freq_bins, num_time_steps=1, num_channels=8, hidden_dim=64):
+    def __init__(self, num_freq_bins, num_time_steps=1, num_channels=8, conv1_out=32, hidden_dim=64):
         super(CNN_1D, self).__init__()
 
         # 1D Convolution over frequency bins (treating time_steps as a single channel)
-        self.conv1 = nn.Conv1d(in_channels=num_channels, out_channels=32, kernel_size=3, padding=1)
+        self.conv1 = nn.Conv1d(in_channels=num_channels, out_channels=conv1_out, kernel_size=3, padding=1)
         self.relu = nn.ReLU()
-        self.conv2 = nn.Conv1d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv1d(in_channels=conv1_out, out_channels=hidden_dim, kernel_size=3, padding=1)
         self.global_pool = nn.AdaptiveAvgPool1d(1)  # Global Pooling over frequency bins
-        self.fc = nn.Linear(64, 1)  # Fully connected layer for output
+        self.fc = nn.Linear(hidden_dim, 1)  # Fully connected layer for output
 
     def forward(self, x):
         batch_size, channels, freq_bins, time_steps = x.shape
@@ -63,10 +64,43 @@ class CNN_1D(nn.Module):
         x = self.conv2(x)
         x = self.relu(x)
 
-        x = self.global_pool(x).squeeze(-1)  # Reduce frequency bins -> (batch, 64)
+        x = self.global_pool(x).squeeze(-1)  # Reduce frequency bins -> (batch, hidden_dim)
         x = self.fc(x).squeeze(-1)  # Fully connected output -> (batch,)
 
         return x.unsqueeze(-1)  # Final shape: (batch, time_steps)
+    
+class CNN_1D_2(nn.Module):
+    def __init__(self, num_channels=16, dropout_rate=0.3):
+        super(CNN_1D_2, self).__init__()
+
+        self.network = nn.Sequential(
+            nn.Conv1d(in_channels=num_channels, out_channels=64, kernel_size=5, padding=2),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+
+            nn.Conv1d(in_channels=64, out_channels=128, kernel_size=3, padding=1),
+            nn.BatchNorm1d(128),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+
+            nn.Conv1d(in_channels=128, out_channels=256, kernel_size=3, padding=1),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool1d(1)  # Global pooling to reduce freq_bins → 1
+        )
+
+        self.fc = nn.Linear(256, 1)  # Final output
+
+    def forward(self, x):
+        # x shape: (batch_size, 16, freq_bins, 1)
+        x = x.squeeze(-1)  # → (batch_size, 16, freq_bins)
+
+        x = self.network(x)  # → (batch_size, 256, 1)
+        x = x.squeeze(-1)    # → (batch_size, 256)
+        x = self.fc(x)       # → (batch_size, 1)
+
+        return x  # (batch_size, 1)
 
 class MLP_out1(nn.Module):
     def __init__(self, num_freq_bins, num_time_steps, num_channels=8, hidden_dim=512): # hidden_dim=128
@@ -123,6 +157,41 @@ class CNN_out1(nn.Module):
         # print(f'x.shape: {x.shape}')
         # exit()
 
+        return x
+    
+class CNN_out1_2(nn.Module):
+    def __init__(self, num_channels=16, dropout_rate=0.3):
+        super(CNN_out1_2, self).__init__()
+
+        self.features = nn.Sequential(
+            # Block 1
+            nn.Conv2d(num_channels, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.Dropout2d(dropout_rate),
+
+            # Block 2
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.BatchNorm2d(128),
+            nn.ReLU(),
+            nn.Dropout2d(dropout_rate),
+
+            # Block 3
+            nn.Conv2d(128, 256, kernel_size=3, padding=1),
+            nn.BatchNorm2d(256),
+            nn.ReLU(),
+
+            # Global Average Pooling
+            nn.AdaptiveAvgPool2d((1, 1))  # Output shape: (batch_size, 256, 1, 1)
+        )
+
+        self.fc = nn.Linear(256, 1)
+
+    def forward(self, x):
+        # Input shape: (batch_size, 16, freq_bins, time_steps)
+        x = self.features(x)               # → (batch_size, 256, 1, 1)
+        x = x.view(x.size(0), -1)          # → (batch_size, 256)
+        x = self.fc(x)                     # → (batch_size, 1)
         return x
 
 class BiLSTM(nn.Module):

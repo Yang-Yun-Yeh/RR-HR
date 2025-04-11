@@ -8,6 +8,18 @@ try:
 except:
      import visualize as vs
 
+def min_max_normalize(X):
+    return (X - np.nanmin(X)) / (np.nanmax(X) - np.nanmin(X))
+
+# S:(window_num, channel_num, freq_num, time_num)
+def normalize_spectrogram(S):
+    S_normalize = np.zeros_like(S)
+    # print(f'S_normalize.shape:{S_normalize.shape}')
+    for i in range(S.shape[0]):
+        S_normalize[i] = min_max_normalize(S[i])
+    
+    return S_normalize
+
 def align_delay(data, delay=10, fs=10):
     gt_shift = data["Force"][int(delay * fs):].to_list()
     data.loc[:len(gt_shift)-1, "Force"] = gt_shift
@@ -115,6 +127,28 @@ def Q_RANSAC(data_still, pool=0.5, d=0.1): # data_still: No motion duration, d:t
     print(f'best_score/total: {best_score}/{sz}')
             
     return best_q_corr
+
+# q1, q2:(x, y, z, w)
+def calculate_omega(q1, q2, dt):
+    return (2 / dt) * np.array([
+        q1[3]*q2[0] - q1[0]*q2[3] - q1[1]*q2[2] + q1[2]*q2[1],
+        q1[3]*q2[1] + q1[0]*q2[2] - q1[1]*q2[3] - q1[2]*q2[0],
+        q1[3]*q2[2] - q1[0]*q2[1] + q1[1]*q2[0] - q1[2]*q2[3]])
+
+# q:(sample num, 4)
+def q_to_omega(q, fs=10):
+    omega = np.zeros((q.shape[0], 3))
+    dt = 1/fs
+    for i in range(1, q.shape[0]):
+        omega[i] = calculate_omega(q[i], q[i-1], dt)
+
+    omega[0] = omega[1]
+    
+    return omega
+
+# omega:(sample num, 3)
+def omega_to_AngSpeed(omega):
+    return np.linalg.norm(omega, axis=1)
 
 def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, window=10, overlap=5, visualize=True):
     N = len(data) # Signal length in samples

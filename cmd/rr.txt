@@ -32,3 +32,16 @@ python test.py --dataset_name hamham_out1 --model_name MLP_out1 --model_type MLP
 
 python train.py --dataset_name hamham_out1 --model_name CNN_out1 --model_type CNN --visualize
 python test.py --dataset_name hamham_out1 --model_name CNN_out1 --model_type CNN
+
+# 16_1D
+python generate_dataset.py -f data/hamham -n dataset/hamham_16_1D
+python train.py --dataset_name hamham_16_1D --model_name MLP_16_1D --visualize
+python train.py --dataset_name hamham_16_1D --model_name CNN_16_1D_2 --model_type CNN --visualize
+
+# 16_2D
+python generate_dataset.py -f data/hamham -n dataset/hamham_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1
+python train.py --dataset_name hamham_16_2D --model_name MLP_16_2D --visualize
+python train.py --dataset_name hamham_16_2D --model_name CNN_16_2D_2 --model_type CNN --visualize
+
+python test.py --dataset_name hamham_16_1D --model_name CNN_16_1D_2 --model_type CNN
+python test.py --dataset_name hamham_16_2D --model_name MLP_16_2D --model_type MLP
