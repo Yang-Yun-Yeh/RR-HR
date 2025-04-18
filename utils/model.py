@@ -212,18 +212,19 @@ class BiLSTM(nn.Module):
         batch_size, channels, freq_bins, time_steps = x.shape
 
         # Flatten channel & frequency bins at each time step
-        x = x.permute(0, 3, 1, 2).reshape(batch_size, time_steps, -1)  # (batch, time_steps, features)
+        x = x.permute(0, 3, 1, 2).reshape(batch_size, time_steps, -1)  # (batch_size, time_steps, features)
 
         # Pass through BiLSTM
-        x, _ = self.bilstm(x)  # (batch, time_steps, hidden_dim * 2)
+        x, _ = self.bilstm(x)  # (batch_size, time_steps, hidden_dim * 2)
         x = self.relu(x)
         
         # Pass through fully connected layers
         x = self.fc1(x)
         x = self.relu(x)
-        x = self.fc2(x)  # (batch, time_steps, 1)
+        x = self.fc2(x)  # (batch_size, time_steps, 1)
+        x = x[:, -1, :]
 
-        return x.squeeze(-1)  # (batch, time_steps)
+        return x  # (batch_size, 1)
 
 class GRU(nn.Module):
     def __init__(self, num_freq_bins, num_time_steps, num_channels=8, hidden_dim=512):
@@ -243,54 +244,54 @@ class GRU(nn.Module):
         batch_size, channels, freq_bins, time_steps = x.shape
 
         # Flatten channel & frequency bins at each time step
-        x = x.permute(0, 3, 1, 2).reshape(batch_size, time_steps, -1)  # (batch, time_steps, features)
+        x = x.permute(0, 3, 1, 2).reshape(batch_size, time_steps, -1)  # (batch_size, time_steps, features)
 
         # Pass through GRU
-        x, _ = self.gru(x)  # (batch, time_steps, hidden_dim)
+        x, _ = self.gru(x)  # (batch_size, time_steps, hidden_dim)
         x = self.relu(x)
         
         # Pass through fully connected layers
         x = self.fc1(x)
         x = self.relu(x)
-        x = self.fc2(x)  # (batch, time_steps, 1)
+        x = self.fc2(x)  # (batch_size, time_steps, 1)
+        x = x[:, -1, :]
 
-        return x.squeeze(-1)  # (batch, time_steps)
+        return x  # (batch_size, 1)
 
+# class CNN_GRU(nn.Module):
+#     def __init__(self, num_freq_bins, num_time_steps=1, num_channels=8, hidden_dim=64, output_dim=1):
+#         super(CNN_GRU, self).__init__()
 
-class CNN_GRU(nn.Module):
-    def __init__(self, num_freq_bins, num_time_steps=1, num_channels=8, hidden_dim=64, output_dim=1):
-        super(CNN_GRU, self).__init__()
+#         # 1D Convolution over frequency bins (treating time_steps as a single channel)
+#         self.conv1 = nn.Conv1d(in_channels=num_channels, out_channels=32, kernel_size=3, padding=1)
+#         self.conv2 = nn.Conv1d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
+#         self.relu = nn.ReLU()
+#         self.global_pool = nn.AdaptiveAvgPool1d(1)  # Global Pooling over frequency bins
 
-        # 1D Convolution over frequency bins (treating time_steps as a single channel)
-        self.conv1 = nn.Conv1d(in_channels=num_channels, out_channels=32, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv1d(in_channels=32, out_channels=64, kernel_size=3, padding=1)
-        self.relu = nn.ReLU()
-        self.global_pool = nn.AdaptiveAvgPool1d(1)  # Global Pooling over frequency bins
+#         # GRU expects input as (batch, seq_len, input_dim)
+#         self.gru = nn.GRU(64, hidden_dim, num_layers=2, batch_first=True, dropout=0.2)
+#         self.fc = nn.Linear(hidden_dim, output_dim)  # Fully connected layer
 
-        # GRU expects input as (batch, seq_len, input_dim)
-        self.gru = nn.GRU(64, hidden_dim, num_layers=2, batch_first=True, dropout=0.2)
-        self.fc = nn.Linear(hidden_dim, output_dim)  # Fully connected layer
+#     def forward(self, x):
+#         batch_size, channels, freq_bins, time_steps = x.shape  # (batch, channels, freq_bins, time_steps)
 
-    def forward(self, x):
-        batch_size, channels, freq_bins, time_steps = x.shape  # (batch, channels, freq_bins, time_steps)
+#         x = x.squeeze(-1)  # Remove time_steps -> (batch, channels, freq_bins)
 
-        x = x.squeeze(-1)  # Remove time_steps -> (batch, channels, freq_bins)
+#         x = self.conv1(x)
+#         x = self.relu(x)
+#         x = self.conv2(x)
+#         x = self.relu(x)
 
-        x = self.conv1(x)
-        x = self.relu(x)
-        x = self.conv2(x)
-        x = self.relu(x)
+#         x = self.global_pool(x).squeeze(-1)  # Reduce frequency bins -> (batch, 64)
 
-        x = self.global_pool(x).squeeze(-1)  # Reduce frequency bins -> (batch, 64)
+#         x = x.unsqueeze(1)  # Add seq_len=1 -> (batch, 1, 64)
 
-        x = x.unsqueeze(1)  # Add seq_len=1 -> (batch, 1, 64)
+#         x, _ = self.gru(x)  # (batch, 1, hidden_dim)
+#         x = self.relu(x)
 
-        x, _ = self.gru(x)  # (batch, 1, hidden_dim)
-        x = self.relu(x)
+#         x = self.fc(x[:, -1, :])  # Take last GRU output -> (batch, output_dim)
 
-        x = self.fc(x[:, -1, :])  # Take last GRU output -> (batch, output_dim)
-
-        return x  # Final shape: (batch, output_dim)
+#         return x  # Final shape: (batch, output_dim)
     
 # class CNN_BiLSTM(nn.Module):
 #     def __init__(self, num_freq_bins, num_time_steps, num_channels=8, hidden_dim=64):
@@ -369,7 +370,7 @@ def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', 
     mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls = [], [], [], []
     
     # Optimizer
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    optimizer = optim.Adam(model.parameters(), lr=0.003)
 
     # model.train()
     for epoch in range(num_epochs):
