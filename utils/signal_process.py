@@ -349,7 +349,7 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64, start_t=0, return_t=F
             if clarity < threshold:
                 pitch = flag
 
-            # if pitch * 60 > 28 or pitch * 60 < 10:
+            # if pitch * 60 > 23.5 or pitch * 60 < 10:
             #     vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
             #     print(clarity)
 
