@@ -5,7 +5,7 @@ from glob import glob
 from utils.visualize import *
 
 if __name__ == '__main__':
-    file_path = "./data/1_19/stand_1.csv"
+    file_path = "./data/2_20/stand2walk_3.csv" #./data/1_19/stand_1.csv, ./data/2_20/stand2walk_3.csv
 
     fs = 10
     data = pd.read_csv(file_path)

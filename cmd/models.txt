@@ -1,0 +1,20 @@
+# 1-D Spectrogram
+window_size=128
+stride=64
+nperseg=128
+noverlap=64
+out1=True
+
+# 2-D Spectrogram (out_1)
+window_size=256
+stride=64
+nperseg=128
+noverlap=64
+out1=True
+
+# 2-D Spectrogram (out_3)
+window_size=256
+stride=64
+nperseg=128
+noverlap=64
+out_1=False
