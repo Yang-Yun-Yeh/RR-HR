@@ -331,13 +331,15 @@ def draw_anc_curve_multi_euler(imu_data, euler_angles, outputs, sensor_names=['i
 
     plt.show()
 
-def draw_autocorrelation_results(preds, gt, times, cols=['q_x', 'q_y', 'q_z', 'q_w']):
+def draw_autocorrelation_results(preds, gt, times, cols=['q_x', 'q_y', 'q_z', 'q_w'], action_name=None):
     markers = ["^", "s", "P", "*"]
 
     fig = plt.figure(figsize=(15, 5), layout="constrained")
     gt_ok_idx = np.where(gt['freq'] > 0)[0]
 
     plt.plot(times[gt_ok_idx],gt['freq'][gt_ok_idx],marker="o",label='gt',)
+    # plot mean of gt
+    plt.plot(times[gt_ok_idx], np.zeros_like(gt['freq'][gt_ok_idx]) + np.mean(gt['freq'][gt_ok_idx]), label='gt_mean')
 
     for i, method in enumerate(preds):
         pred_ok_idx = np.where(preds[method] > 0)[0]
@@ -345,7 +347,7 @@ def draw_autocorrelation_results(preds, gt, times, cols=['q_x', 'q_y', 'q_z', 'q
         
         plt.plot(times[all_ok_idx], preds[method][all_ok_idx], marker=markers[i], label=method)
     
-    plt.title("Prediction Results")
+    plt.title(f"Prediction Results: {action_name}")
     plt.xlabel("Time (s)")
     plt.ylabel("RR (1/min)")
     plt.gca().set_ylim(bottom=0)
@@ -509,13 +511,15 @@ def draw_learning_results(preds, gt, times, action_name, cols=['q_x', 'q_y', 'q_
     gt_ok_idx = np.where(gt > 0)[0]
 
     plt.plot(times[gt_ok_idx], gt[gt_ok_idx], marker="o", label='gt',)
+    # plot mean of gt
+    plt.plot(times[gt_ok_idx], np.zeros_like(gt[gt_ok_idx]) + np.mean(gt[gt_ok_idx]), label='gt_mean')
 
     for i, method in enumerate(preds):
         pred_ok_idx = np.where(preds[method] > 0)[0]
         all_ok_idx = list(set(gt_ok_idx) & set(pred_ok_idx))
         
         plt.plot(times[all_ok_idx], preds[method][all_ok_idx], marker=markers[i], label=method)
-    
+
     plt.title(f"Prediction Results: {action_name}")
     plt.xlabel("Time (s)")
     plt.ylabel("RR (1/min)")

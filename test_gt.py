@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 
 if __name__ == '__main__':
     # Test one file
-    action_name = "walk_stand_0407_0852"
+    action_name = "walk_stand_0407_0858" # walk_stand_0407_0852, walk_stand_0407_0858, walk_stand_0407_0903
     # sit,  stand, walk_stand, run_stand, mix
     # path_file = f'./data/hamham/test/{action_name}.csv'
     # path_file = f'./data/3_28/{action_name}.csv'
@@ -39,7 +39,8 @@ if __name__ == '__main__':
     # Load model
     # model = MLP(65, 1, num_channels=16)
     model = MLP_out1(num_freq_bins, num_time_steps, num_channels=num_channels)
-    model_name = "MLP_16_2D"
+    # model = CNN_out1_2(num_channels=num_channels)
+    model_name = "MLP_2P_2D" # MLP_2P_2D, CNN_2P_2D_2
     model.load_state_dict(torch.load(f'./models/{str(model_name)}.pt'))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

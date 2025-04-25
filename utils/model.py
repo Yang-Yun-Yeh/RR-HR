@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
+from sklearn.metrics import r2_score
 
 try:
      from . import visualize as vs
@@ -511,12 +512,14 @@ def evaluate_model_file(model, file_loader, model_name, device="cuda", gt=None, 
     avg_mse_loss = total_mse_loss / num_batches
     avg_l1_loss = 60 * total_l1_loss / num_batches
 
-    preds = {model_name: np.array(pred)}
+    pred =  np.array(pred)
+    preds = {model_name: pred}
+    r2 = r2_score(60 * gt, pred) # R-squared
 
     if visualize:
         vs.draw_learning_results(preds, 60 * gt, times, action_name)
 
-    print(f"Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min")
+    print(f"Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min, R\u00b2:{r2:.4f}")
     return avg_mse_loss, avg_l1_loss, preds
 
 def evaluate_models_file(models, file_loader, models_name, device="cuda", gt=None, times=None, visualize=True, action_name=None):
@@ -559,12 +562,15 @@ def evaluate_models_file(models, file_loader, models_name, device="cuda", gt=Non
         # Compute average loss over all batches
         avg_mse_loss = total_mse_loss / num_batches
         avg_l1_loss = 60 * total_l1_loss / num_batches
-        print(f"{model_name} Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min")
-
+        
         avg_mse_loss_ls.append(avg_mse_loss)
         avg_l1_loss_ls.append(avg_l1_loss)
 
-        preds[model_name] = np.array(pred)
+        pred =  np.array(pred)
+        preds[model_name] = pred
+        r2 = r2_score(60 * gt, pred) # R-squared
+
+        print(f"{model_name} Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min, R\u00b2:{r2:.4f}")
 
     if visualize:
         vs.draw_learning_results(preds, 60 * gt, times, action_name)

@@ -2,6 +2,7 @@ import numpy as np
 from scipy import signal as sg
 from scipy.spatial.transform import Rotation as R
 import statsmodels.api as sm
+from sklearn.metrics import r2_score
 
 try:
      from . import visualize as vs
@@ -150,22 +151,22 @@ def q_to_omega(q, fs=10):
 def omega_to_AngSpeed(omega):
     return np.linalg.norm(omega, axis=1)
 
-def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, window=10, overlap=5, visualize=True):
+def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, window=10, overlap=5, visualize=True, action_name=None, return_r2=False):
     N = len(data) # Signal length in samples
     T = 1/fs # Sampling period
     n = int(window * fs) # lag (window size)
     t = N / fs # Signal length in seconds
     flag = -10 # No freq. symbol
-    print(f'f_s :{fs}, T:{T}, N:{N}, n:{n}, t:{t}')
+    # print(f'f_s :{fs}, T:{T}, N:{N}, n:{n}, t:{t}')
 
     window_size = n
     overlap_size = int(overlap * fs)
     window_num = int((N - n) / (n - overlap_size)) + 1
 
-    print(f'window_num:{window_num}, overlap_size:{overlap_size}, window_size:{window_size}')
+    # print(f'window_num:{window_num}, overlap_size:{overlap_size}, window_size:{window_size}')
 
     # Initialize
-    freqs, calrities, mae = {}, {}, {}
+    freqs, calrities, mae, r2 = {}, {}, {}, {}
     gt, preds, times = {}, {}, []
     for i in range(len(outputs)):
         freqs[outputs[i]['method']] = {key:[] for key in cols}
@@ -241,7 +242,7 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
                     freqs[method][col].append(flag)
                     calrities[method][col].append(flag)
     
-    # Estimate error(MAE)
+    # Estimate error (MAE)
     gt_ok_idx = np.where(np.array(gt['freq']) > 0)[0]
     for i, method in enumerate(mae):
         mae_ls = []
@@ -255,15 +256,22 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
                         mae_sample_ls.append(mae_sample)
                         pred_sample_ls.append(freqs[method][col][j])
 
-                    if mae_sample_ls:
-                        min_idx = np.argmin(mae_sample_ls)
-                        mae_ls.append(mae_sample_ls[min_idx])
-                        preds[method].append(pred_sample_ls[min_idx])
-                    else:
-                        preds[method].append(flag)
+                if mae_sample_ls:
+                    # min_idx = np.argmin(mae_sample_ls)
+                    # mae_ls.append(mae_sample_ls[min_idx])
+                    # preds[method].append(pred_sample_ls[min_idx])
+
+                    mae_ls.append(np.mean(mae_sample_ls))
+                    preds[method].append(np.mean(pred_sample_ls))
+                else:
+                    preds[method].append(flag)
         if mae_ls:
             mae[method] = np.mean(mae_ls)
             preds[method] = np.array(preds[method])
+            # gt_shape = np.array(gt['freq']).shape
+            # pred_shape = np.array(preds[method]).shape
+            # print(f'gt: {gt_shape}, pred: {pred_shape}')
+            r2[method] = r2_score(np.array(gt['freq']), np.array(preds[method]))
 
     # Convert to numpy array
     gt['freq'] = np.array(gt['freq'])
@@ -272,9 +280,12 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
 
     # Draw results
     if visualize:
-        vs.draw_autocorrelation_results(preds, gt, times, cols=cols)
+        vs.draw_autocorrelation_results(preds, gt, times, cols=cols, action_name=action_name)
     
-    return mae
+    if return_r2:
+        return mae, r2
+    else:
+        return mae
 
 # fs=10, nperseg=128, noverlap=64
 def compute_spectrogram(imu_data, fs=10, nperseg=128, noverlap=64):
