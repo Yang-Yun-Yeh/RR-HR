@@ -61,3 +61,5 @@ python train.py --dataset_name 2P_16_2D --model_name CNN_2P_2D_2 --model_type CN
 
 python test.py --dataset_name 2P_16_2D --model_name MLP_2P_2D --model_type MLP
 python test.py --dataset_name 2P_16_2D --model_name CNN_2P_2D_2 --model_type CNN
+
+python generate_dataset.py -f data/2P -n dataset/action/2P_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action

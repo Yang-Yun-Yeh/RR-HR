@@ -576,3 +576,57 @@ def evaluate_models_file(models, file_loader, models_name, device="cuda", gt=Non
         vs.draw_learning_results(preds, 60 * gt, times, action_name)
 
     return avg_mse_loss, avg_l1_loss, preds
+
+def evaluate_models_action(models, input_test, gt_test, models_name, device="cuda", visualize=False):
+    pred_test = {key:{} for key in models_name}
+    mae_test = {key:{} for key in models_name}
+    
+    for i in range(len(models)):
+        model = models[i]
+        model_name = models_name[i]
+
+        model.to(device)
+        model.eval()  # Set model to evaluation mode
+
+        print(models_name[i])
+        for k, v in input_test.items():
+            # print(f'action: {k}')
+            dataset_test = IMUSpectrogramDataset(input_test[k], gt_test[k])
+            test_loader = DataLoader(dataset_test, batch_size=1, shuffle=False)
+
+            criterion_mse = nn.MSELoss()
+            criterion_l1 = nn.L1Loss()
+
+            total_mse_loss = 0
+            total_l1_loss = 0
+            num_batches = 0
+
+            with torch.no_grad():  # No gradient computation during evaluation
+                for spectrograms, respiration_rates in test_loader:
+                    spectrograms, respiration_rates = spectrograms.to(device), respiration_rates.to(device)
+
+                    # Forward pass
+                    outputs = model(spectrograms)  # Shape: (batch, time_steps)
+                    if k in pred_test[model_name]:
+                        pred_test[model_name][k].append(outputs.cpu().numpy()[0][0])
+                    else:
+                        pred_test[model_name][k] = [outputs.cpu().numpy()[0][0]]
+                
+                    # Compute losses
+                    mse_loss = criterion_mse(outputs, respiration_rates)
+                    l1_loss = criterion_l1(outputs, respiration_rates)
+
+                    total_mse_loss += mse_loss.item()
+                    total_l1_loss += l1_loss.item()
+                    num_batches += 1
+
+            # Compute average loss over all batches
+            avg_mse_loss = total_mse_loss / num_batches
+            avg_l1_loss = 60 * total_l1_loss / num_batches
+            mae_test[model_name][k] = avg_l1_loss
+
+            print(f"{k} - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min")
+        print()
+        
+    if visualize:
+        vs.draw_learning_results_action(pred_test, gt_test, mae_test, models_name=models_name)

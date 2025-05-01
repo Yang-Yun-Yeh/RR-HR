@@ -570,6 +570,41 @@ def draw_acf(acf, lag, frame_segment, fs=10, acf_filtered=None):
     plt.tight_layout()
     plt.show()
 
+def draw_learning_results_action(preds, gt, mae_test, models_name=None):
+    colors = ['blue', 'orange', 'green', 'purple', 'cyan', 'deeppink', 'olivedrab']
+    
+    col_num = len(preds[next(iter(preds))]) # action num
+    row_num = len(preds) # method num
+    fig = plt.figure(figsize=(3*col_num, 3*row_num), layout="constrained")
+    spec = fig.add_gridspec(row_num, col_num)
+    legend_handle_ls = []
+    axix_lim = 40
+
+    for i, method in enumerate(preds):
+        for j, action in enumerate(preds[method]):
+            ax = fig.add_subplot(spec[i, j % col_num])
+            preds[method][action] = np.array(preds[method][action])
+
+            # print(gt[action].shape)
+            # print(preds[action].shape)
+            ax.set_title(f'{action} (MAE={mae_test[method][action]:.4f})')
+            ax.scatter(60 * gt[action], 60 * preds[method][action], color=colors[i], s=5)
+            ax.plot(np.linspace(0, axix_lim, num=1000), np.linspace(0, axix_lim, num=1000), color='black')
+            ax.grid(True)
+            # ax.set_ylabel('gt (1/min)')
+            # ax.set_xlabel('pred (1/min)')
+            ax.set_ylim(0, axix_lim)
+            ax.set_xlim(0, axix_lim)
+
+        legend_handle_ls.append(Line2D([], [], label=models_name[i], color="white", marker='o', markerfacecolor=colors[i]))
+    
+    
+    fig.supxlabel('gt (1/min)')
+    fig.supylabel('pred (1/min)')
+    fig.legend(handles=legend_handle_ls, loc="upper right")
+    
+    plt.show()
+
 
 if __name__ == '__main__':
     file_path = "./data_test/sit_4.csv"
