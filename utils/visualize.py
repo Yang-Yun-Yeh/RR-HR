@@ -570,7 +570,7 @@ def draw_acf(acf, lag, frame_segment, fs=10, acf_filtered=None):
     plt.tight_layout()
     plt.show()
 
-def draw_learning_results_action(preds, gt, mae_test, models_name=None):
+def draw_learning_results_action(preds, gt, mae_test, models_name=None, paper=False):
     colors = ['blue', 'orange', 'green', 'purple', 'cyan', 'deeppink', 'olivedrab']
     
     col_num = len(preds[next(iter(preds))]) # action num
@@ -584,11 +584,11 @@ def draw_learning_results_action(preds, gt, mae_test, models_name=None):
         for j, action in enumerate(preds[method]):
             ax = fig.add_subplot(spec[i, j % col_num])
             preds[method][action] = np.array(preds[method][action])
-
-            # print(gt[action].shape)
-            # print(preds[action].shape)
             ax.set_title(f'{action} (MAE={mae_test[method][action]:.4f})')
-            ax.scatter(60 * gt[action], 60 * preds[method][action], color=colors[i], s=5)
+            if not paper:
+                ax.scatter(60 * gt[action], 60 * preds[method][action], color=colors[i], s=5)
+            else:
+                ax.scatter(gt[action], preds[method][action], color=colors[i], s=5)
             ax.plot(np.linspace(0, axix_lim, num=1000), np.linspace(0, axix_lim, num=1000), color='black')
             ax.grid(True)
             # ax.set_ylabel('gt (1/min)')
@@ -603,6 +603,54 @@ def draw_learning_results_action(preds, gt, mae_test, models_name=None):
     fig.supylabel('pred (1/min)')
     fig.legend(handles=legend_handle_ls, loc="upper right")
     
+    plt.show()
+
+def draw_learning_results_action_relative(relative_mae, sigma_num=1, models_name=None):
+    colors = ['blue', 'orange', 'green', 'purple', 'cyan', 'deeppink', 'olivedrab']
+
+    col_num = 2 # len(relative_mae[next(iter(relative_mae))]) # action num
+    row_num = 2 # len(relative_mae) # method num
+    fig = plt.figure(figsize=(4*col_num, 3*row_num), layout="constrained")
+    spec = fig.add_gridspec(row_num, col_num)
+    legend_handle_ls = []
+    y_axis_upper = 80
+
+
+    action_ls = relative_mae[next(iter(relative_mae))].keys()
+    method_ls = relative_mae.keys()
+    x = np.arange(len(method_ls))
+    relative_mae_means = {key:{} for key in action_ls} # [action][method]
+    relative_mae_std = {key:{} for key in action_ls} # [action][method]
+    
+    # Calculate relative mae for errorbar plot
+    for i, method in enumerate(relative_mae):
+        for j, action in enumerate(relative_mae[method]):
+            relative_mae_means[action][method] = np.mean(relative_mae[method][action])
+            relative_mae_std[action][method] = np.std(relative_mae[method][action])
+
+    # Draw errorbar plot
+    for i, action in enumerate(relative_mae_means):
+        ax = fig.add_subplot(spec[i // col_num , i % col_num])
+
+        mean_ls = []
+        error_ls = []
+        for j, method in enumerate(relative_mae_means[action]):
+            mean_ls.append(relative_mae_means[action][method])
+            error_ls.append(sigma_num * np.array(relative_mae_std[action][method]))
+            plt.errorbar(x[j], mean_ls[j], yerr=error_ls[j], fmt='o', capsize=5, color=colors[j], label=method)
+        
+
+        ax.set_title(f'{action}')
+        ax.legend()
+        # plt.errorbar(x, mean_ls, yerr=error_ls, fmt='o', capsize=5, color=colors[i])
+        # plt.xticks(x, method_ls, rotation=45)
+        plt.xticks(x, method_ls)
+        ax.yaxis.grid(True)
+        ax.set_ylabel('Relative MAE (%)')
+        ax.set_ylim(0, y_axis_upper)
+        ax.set_yticks(np.arange(0, y_axis_upper + 10, 10))
+        # ax.set_xlim(0, len(x))
+ 
     plt.show()
 
 

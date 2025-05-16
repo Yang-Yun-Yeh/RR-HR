@@ -1,0 +1,7 @@
+sudo apt install realvnc-vnc-server realvnc-vnc-viewer
+sudo raspi-config
+sudo reboot
+sudo netstat -lpn | grep tcp | grep vnc
+
+hostname -I
+ifconfig
