@@ -1,0 +1,19 @@
+# 樹梅pi使用者名稱與密碼
+User name:pi
+password:riot
+
+# file zilla (把檔案從樹梅pi拉到本機):
+ip:192.168.50.144(樹梅pi連到區網的IP)
+user name:pi
+password:riot
+port:22
+
+# RealVNC Viewer (遠端控制樹梅pi)
+cd code #切換到code目錄
+python imu_dryrun.py #測試IMU封包
+python record.py -f csv/5_14 -p test -a test --start 0 --still 0 --vs #測試錄資料
+python record.py -f csv/5_14 -p hamham -a sit --start 100 --still 300 --vs #正式錄資料
+
+ps.
+● If錄資料時沒有資料進來 -> 重開樹梅pi的電源(斷電10秒以上)
+● 電池盒的電池大約可以撐2~3小時，沒電可以用袋子裡的充電器充電

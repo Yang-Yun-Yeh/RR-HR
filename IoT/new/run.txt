@@ -1,0 +1,27 @@
+pwd
+cd code
+
+// test gt RR
+python imu_dryrun.py
+
+// record data
+python daq.py
+python imu_dryrun.py
+
+python record.py -f csv/5_14 -p test -a test --start 0 --still 0 --vs
+python record.py -f csv/5_14 -p test -a test --start 100 --still 300 --vs
+
+python record.py -f csv/5_14 -p test -a test --start 0 --still 0
+
+
+python record.py -f csv/5_14 -p m1 -a run --start 100 --still 300 --vs
+
+// check IP
+hostname -I # raspberrypi side
+ping -4 raspberrypi # local side
+arp -a # local side
+nmap -sP 192.168.1.* # local side
+
+sudo nmtui
+
+m1: 王崇喆

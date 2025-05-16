@@ -630,3 +630,66 @@ def evaluate_models_action(models, input_test, gt_test, models_name, device="cud
         
     if visualize:
         vs.draw_learning_results_action(pred_test, gt_test, mae_test, models_name=models_name)
+
+def evaluate_models_action_relative(models, input_test, gt_test, models_name, device="cuda", visualize=False):
+    pred_test = {key:{} for key in models_name}
+    relative_mae = {key:{} for key in models_name} # each sample point relative mae in [method][action]
+    mae_test = {key:{} for key in models_name} # overall mae in each [method][action]
+    overall_relative_mae = {key:{} for key in models_name} # overall relative mae in [method][action]
+    
+    for i in range(len(models)):
+        model = models[i]
+        model_name = models_name[i]
+
+        model.to(device)
+        model.eval()  # Set model to evaluation mode
+
+        print(models_name[i])
+        for k, v in input_test.items():
+            # print(f'action: {k}')
+            dataset_test = IMUSpectrogramDataset(input_test[k], gt_test[k])
+            test_loader = DataLoader(dataset_test, batch_size=1, shuffle=False)
+
+            criterion_mse = nn.MSELoss()
+            criterion_l1 = nn.L1Loss()
+
+            total_mse_loss = 0
+            total_l1_loss = 0
+            num_batches = 0
+
+            with torch.no_grad():  # No gradient computation during evaluation
+                for spectrograms, respiration_rates in test_loader:
+                    spectrograms, respiration_rates = spectrograms.to(device), respiration_rates.to(device)
+
+                    # Forward pass
+                    outputs = model(spectrograms)  # Shape: (batch, time_steps)
+                    outputs_np = outputs.cpu().numpy()[0][0]
+                    gts_np = respiration_rates.cpu().numpy()[0][0]
+                    
+                    if k in pred_test[model_name]:
+                        pred_test[model_name][k].append(outputs_np)
+                        relative_mae[model_name][k].append(abs(outputs_np - gts_np) / gts_np * 100)
+                    else:
+                        pred_test[model_name][k] = [outputs_np]
+                        relative_mae[model_name][k] = [abs(outputs_np - gts_np) / gts_np * 100]
+                
+                    # Compute losses
+                    mse_loss = criterion_mse(outputs, respiration_rates)
+                    l1_loss = criterion_l1(outputs, respiration_rates)
+
+                    total_mse_loss += mse_loss.item()
+                    total_l1_loss += l1_loss.item()
+                    num_batches += 1
+
+            # Compute average loss over all batches
+            avg_mse_loss = total_mse_loss / num_batches
+            avg_l1_loss = 60 * total_l1_loss / num_batches
+            avg_relative_mae = np.mean(relative_mae[model_name][k])
+            mae_test[model_name][k] = avg_l1_loss
+            overall_relative_mae[model_name][k] = avg_relative_mae
+
+            print(f"{k} - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min E%: {avg_relative_mae:.4f}%")
+        print()
+        
+    if visualize:
+        vs.draw_learning_results_action_relative(relative_mae, sigma_num=1, models_name=models_name)
