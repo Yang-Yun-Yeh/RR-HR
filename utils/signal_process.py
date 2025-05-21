@@ -192,7 +192,7 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
 
             peak_id = 0
             threshold = -0.1
-            while (clarity < threshold or pitch*60 > 30) and peak_id < len(peaks):
+            while (clarity < threshold or pitch*60 > 35) and peak_id < len(peaks):
                 lag = peaks[peak_id]
                 pitch = fs / lag
                 clarity = acf_filtered[lag] / acf_filtered[0]
@@ -351,7 +351,7 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64, start_t=0, return_t=F
 
             peak_id = 0
             threshold = -0.1
-            while (clarity < threshold or pitch*60 > 30) and peak_id < len(peaks):
+            while (clarity < threshold or pitch*60 > 35) and peak_id < len(peaks):
                 lag = peaks[peak_id]
                 pitch = fs / lag
                 clarity = acf_filtered[lag] / acf_filtered[0]
@@ -360,9 +360,9 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64, start_t=0, return_t=F
             if clarity < threshold:
                 pitch = flag
 
-            # if pitch * 60 > 23.5 or pitch * 60 < 10:
+            # if pitch * 60 > 29.5 or pitch * 60 < 16:
+            #     print(f"clarity: {clarity}, gt:{pitch * 60}")
             #     vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
-            #     print(clarity)
 
             # print(has_draw[0])
             # print(i)

@@ -605,6 +605,40 @@ def draw_learning_results_action(preds, gt, mae_test, models_name=None, paper=Fa
     
     plt.show()
 
+def draw_learning_results_action_bar(mae_test, models_name=None, paper=False):
+    colors = ['blue', 'orange', 'green', 'purple', 'cyan', 'deeppink', 'olivedrab']
+
+    col_num = 2
+    row_num = 2
+    fig = plt.figure(figsize=(4*col_num, 3*row_num), layout="constrained")
+    spec = fig.add_gridspec(row_num, col_num)
+    y_axis_upper = 15
+    delta_y = 2
+
+    action_ls = mae_test[next(iter(mae_test))].keys()
+    method_ls = mae_test.keys()
+    x = np.arange(len(method_ls))
+    
+    # Draw bar plot
+    for i, action in enumerate(action_ls):
+        ax = fig.add_subplot(spec[i // col_num , i % col_num])
+
+        for j, method in enumerate(method_ls):
+            plt.bar(x[j], mae_test[method][action], color=colors[j], label=method)
+        
+
+        ax.set_title(f'{action}')
+        ax.legend()
+        plt.xticks(x, method_ls)
+        ax.yaxis.grid(True)
+        ax.set_ylabel('MAE (1/min)')
+        ax.set_ylim(0, y_axis_upper)
+        ax.set_yticks(np.arange(0, y_axis_upper + delta_y, delta_y))
+ 
+    plt.show()
+
+
+
 def draw_learning_results_action_relative(relative_mae, sigma_num=1, models_name=None):
     colors = ['blue', 'orange', 'green', 'purple', 'cyan', 'deeppink', 'olivedrab']
 
@@ -614,7 +648,6 @@ def draw_learning_results_action_relative(relative_mae, sigma_num=1, models_name
     spec = fig.add_gridspec(row_num, col_num)
     legend_handle_ls = []
     y_axis_upper = 80
-
 
     action_ls = relative_mae[next(iter(relative_mae))].keys()
     method_ls = relative_mae.keys()
