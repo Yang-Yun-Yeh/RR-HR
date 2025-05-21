@@ -1,26 +1,42 @@
-import matplotlib.pyplot as plt
-import numpy as np
+from utils.visualize import *
+from utils.FIR_filter import *
+from utils.signal_process import *
+from utils.preprocess import *
+from utils.model import *
 
-# Bone categories
-bones = ['pelvis', 'thigh', 'calf', 'spine 1', 'spine 2', 'neck', 'head', 'shoulder', 'upper arm', 'forearm']
-x = np.arange(len(bones))
+import torch
+from torch.utils.data import Dataset, DataLoader
 
-# Synthetic (smpl) data
-synthetic_means = [0.15, 0.44, 0.43, 0.25, 0.25, 0.12, 0.11, 0.15, 0.27, 0.24]
-synthetic_errors = [0.01, 0.02, 0.03, 0.01, 0.01, 0.005, 0.005, 0.01, 0.015, 0.015]
+import pickle
 
-# Human3.6M data
-human_means = [0.13, 0.46, 0.45, 0.24, 0.25, 0.12, 0.11, 0.16, 0.26, 0.24]
-human_errors = [0.008, 0.01, 0.01, 0.008, 0.008, 0.004, 0.004, 0.009, 0.012, 0.01]
+if __name__ == '__main__':
+    # Load dataset
+    dataset_dir = "dataset/action"
+    dataset_name = "2P_16_2D" # 2P_16_1D, 2P_16_2D
+    pkl_test = pickle.load(open(os.path.join(dataset_dir, f'{dataset_name}_test.pkl'), 'rb'))
+    input_test, gt_test = pkl_test['input'], pkl_test['gt']
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Plot
-plt.figure(figsize=(10, 4))
-plt.errorbar(x, synthetic_means, yerr=synthetic_errors, fmt='o', capsize=5, label='Synthetic (smpl)')
-plt.errorbar(x, human_means, yerr=human_errors, fmt='o', capsize=5, label='Human3.6M', color='orange')
+    first_key = next(iter(input_test))
+    num_channels = input_test[first_key].shape[1]
+    num_freq_bins = input_test[first_key].shape[2]
+    num_time_steps = input_test[first_key].shape[3]
 
-# Axis settings
-plt.xticks(x, bones, rotation=45)
-plt.ylabel('Bone length (mm)')
-plt.legend()
-plt.tight_layout()
-plt.show()
+    print('Testing data......')
+    for k, v in input_test.items():
+        print(f'action: {k}')
+        # print(f'input_test[{k}]:{input_test[k].shape}')
+        # print(f'gt_test[{k}]:{gt_test[k].shape}')
+
+    # 2-D spectrogram
+    models_name = ['MLP_2P_2D', 'CNN_2P_2D_2', '0417_BiLSTM_2P_2D_lr_0.001', '0417_GRU_2P_2D_lr_0.001']
+    models = [MLP_out1(num_freq_bins, num_time_steps, num_channels=num_channels),
+            CNN_out1_2(num_channels=num_channels),
+            BiLSTM(num_freq_bins, num_time_steps, num_channels=num_channels),
+            GRU(num_freq_bins, num_time_steps, num_channels=num_channels)]
+
+    for i in range(len(models_name)):
+        models[i].load_state_dict(torch.load(f'./models/{str(models_name[i])}.pt'))
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    evaluate_models_action(models, input_test, gt_test, models_name=["MLP_2D", "CNN_2D", "BiLSTM_2D", "GRU_2D"], device=device, visualize=True)

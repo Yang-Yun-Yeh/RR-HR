@@ -630,6 +630,7 @@ def evaluate_models_action(models, input_test, gt_test, models_name, device="cud
         
     if visualize:
         vs.draw_learning_results_action(pred_test, gt_test, mae_test, models_name=models_name)
+        vs.draw_learning_results_action_bar(mae_test, models_name=models_name)
 
 def evaluate_models_action_relative(models, input_test, gt_test, models_name, device="cuda", visualize=False):
     pred_test = {key:{} for key in models_name}

@@ -9,10 +9,10 @@ from torch.utils.data import Dataset, DataLoader
 if __name__ == '__main__':
     # Test one file
     action_name = "walk_stand_0407_0858" # walk_stand_0407_0852, walk_stand_0407_0858, walk_stand_0407_0903
-    # sit,  stand, walk_stand, run_stand, mix
-    # path_file = f'./data/hamham/test/{action_name}.csv'
-    # path_file = f'./data/3_28/{action_name}.csv'
     path_file = f'./data/2P/test/{action_name}.csv'
+
+    action_name = "walk_0516_0650"
+    path_file = f'./data/5_16/kiri/{action_name}.csv'
 
     # 1-D spectrogram
     # window_size=128

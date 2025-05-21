@@ -45,13 +45,17 @@ if __name__ == '__main__':
 
     # Load model
     if args.model_type == "MLP":
-        model = MLP(num_freq_bins, num_time_steps, num_channels=num_channels)
-        # model = MLP_out1(num_freq_bins, num_time_steps, num_channels=num_channels)
+        # model = MLP(num_freq_bins, num_time_steps, num_channels=num_channels)
+        model = MLP_out1(num_freq_bins, num_time_steps, num_channels=num_channels)
     elif args.model_type == "CNN":
         # model = CNN_1D(num_freq_bins, num_time_steps, num_channels=num_channels)
         # model = CNN_out1(num_channels=num_channels)
-        model = CNN_1D_2(num_channels=num_channels)
-        # model = CNN_out1_2(num_channels=num_channels)
+        # model = CNN_1D_2(num_channels=num_channels)
+        model = CNN_out1_2(num_channels=num_channels)
+    elif args.model_type == "BiLSTM":
+        model = BiLSTM(num_freq_bins, num_time_steps, num_channels=num_channels)
+    elif args.model_type == "GRU":
+        model = GRU(num_freq_bins, num_time_steps, num_channels=num_channels)
 
     model.load_state_dict(torch.load(f'./models/{args.model_name}.pt'))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

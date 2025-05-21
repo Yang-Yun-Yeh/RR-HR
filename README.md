@@ -22,14 +22,6 @@ python visualize_data.py
 
 ### Step.1 Generate training, test set:
 ```
-# 1-D Spectrogram (dataset:hamham)
-python generate_dataset.py -f data/hamham -n dataset/hamham_16_1D
-```
-```
-# 2-D Spectrogram (dataset:hamham)
-python generate_dataset.py -f data/hamham -n dataset/hamham_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1
-```
-```
 # 1-D Spectrogram (dataset:2P)
 python generate_dataset.py -f data/2P -n dataset/2P_16_1D
 ```
@@ -37,30 +29,30 @@ python generate_dataset.py -f data/2P -n dataset/2P_16_1D
 # 2-D Spectrogram (dataset:2P)
 python generate_dataset.py -f data/2P -n dataset/2P_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1
 ```
+```
+# 2-D Spectrogram (dataset:8P)
+python generate_dataset.py -f data/8P -n dataset/8P_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1
+```
+```
+# 2-D Spectrogram-action (dataset:8P)
+python generate_dataset.py -f data/8P -n dataset/action/8P_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action
+```
+
 
 ### Step.2 Train model:
 ```
-# 1-D Spectrogram (dataset:hamham)
-python train.py --dataset_name hamham_16_1D --model_name MLP_16_1D --visualize
-```
-```
-# 2-D Spectrogram (dataset:hamham)
-python train.py --dataset_name hamham_16_2D --model_name CNN_16_2D_2 --model_type CNN --visualize
-```
-```
-# 2-D Spectrogram (dataset:2P)
-python train.py --dataset_name 2P_16_2D --model_name MLP_2P_2D --visualize
+# 2-D Spectrogram (dataset:8P)
+# MLP
+python train.py --dataset_name 8P_16_2D --model_name MLP_8P_2D --model_type MLP -b 8 --visualize
+# CNN
+python train.py --dataset_name 8P_16_2D --model_name CNN_8P_2D --model_type CNN -b 8 --visualize
+# BiLSTM
+python train.py --dataset_name 8P_16_2D --model_name BiLSTM_8P_2D --model_type BiLSTM -b 8 --visualize
+# GRU
+python train.py --dataset_name 8P_16_2D --model_name GRU_8P_2D --model_type GRU -b 8 --visualize
 ```
 
 ### Step.3 Test model:
-```
-# 1-D Spectrogram (dataset:hamham)
-python test.py --dataset_name hamham --model_name MLP_1D --model_type MLP
-```
-```
-# 2-D Spectrogram (dataset:hamham)
-python test.py --dataset_name hamham_16_2D --model_name MLP_16_2D --model_type MLP
-```
 ```
 # 2-D Spectrogram (dataset:2P)
 python test.py --dataset_name 2P_16_2D --model_name MLP_2P_2D --model_type MLP
@@ -69,6 +61,6 @@ python test.py --dataset_name 2P_16_2D --model_name MLP_2P_2D --model_type MLP
 ### Optional: Test model by actions
 ```
 # Generate dataset with action name info.
-python generate_dataset.py -f data/2P -n dataset/action/2P_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action
+python generate_dataset.py -f data/8P -n dataset/action/8P_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action
 ```
-- Use learning_base_16_2P.ipynb Testing Actions part
+- Use learning_base_16_8P.ipynb Testing Actions part
