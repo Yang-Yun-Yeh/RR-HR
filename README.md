@@ -50,6 +50,8 @@ python train.py --dataset_name 8P_16_2D --model_name CNN_8P_2D --model_type CNN 
 python train.py --dataset_name 8P_16_2D --model_name BiLSTM_8P_2D --model_type BiLSTM -b 8 --visualize
 # GRU
 python train.py --dataset_name 8P_16_2D --model_name GRU_8P_2D --model_type GRU -b 8 --visualize
+# ViT
+python train.py --dataset_name 7.75P_BC --model_name VT_7.75P_BC_emht2 --model_type VT -b 8 --visualize
 ```
 
 ### Step.3 Test model:
