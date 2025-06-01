@@ -6,18 +6,25 @@ from sklearn.metrics import r2_score
 
 try:
      from . import visualize as vs
+     from . import FIR_filter as FIRF
 except:
      import visualize as vs
+     import FIR_filter as FIRF
 
 def min_max_normalize(X):
     return (X - np.nanmin(X)) / (np.nanmax(X) - np.nanmin(X))
 
 # S:(window_num, channel_num, freq_num, time_num)
-def normalize_spectrogram(S):
+def normalize_spectrogram(S, byCol=False):
     S_normalize = np.zeros_like(S)
     # print(f'S_normalize.shape:{S_normalize.shape}')
-    for i in range(S.shape[0]):
-        S_normalize[i] = min_max_normalize(S[i])
+    if byCol:
+        for i in range(S.shape[0]):
+            for j in range(S.shape[3]):
+                S_normalize[i, :, :, j] = min_max_normalize(S[i, :, :, j])
+    else:
+        for i in range(S.shape[0]):
+            S_normalize[i] = min_max_normalize(S[i])
     
     return S_normalize
 
@@ -151,7 +158,18 @@ def q_to_omega(q, fs=10):
 def omega_to_AngSpeed(omega):
     return np.linalg.norm(omega, axis=1)
 
-def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, window=10, overlap=5, visualize=True, action_name=None, return_r2=False):
+def anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995):
+    # Init
+    outputs_dict_LMS = FIRF.LMS(data_anc, NTAPS, LEARNING_RATE)
+    outputs_dict_LMSLS = FIRF.LMSLS(data_anc, NTAPS, LEARNING_RATE)
+    outputs_dict_RLS = FIRF.RLS(data_anc, NTAPS, delta, lam_rls)
+    outputs_dict_LRLS = FIRF.LRLS(data_anc, NTAPS, epsilon, lam_lrls)
+
+    outputs = [outputs_dict_LMS, outputs_dict_LMSLS, outputs_dict_RLS, outputs_dict_LRLS]
+
+    return outputs
+
+def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, window=10, overlap=5, visualize=True, action_name=None, return_r2=False, return_pgm=False):
     N = len(data) # Signal length in samples
     T = 1/fs # Sampling period
     n = int(window * fs) # lag (window size)
@@ -261,7 +279,8 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
                     # mae_ls.append(mae_sample_ls[min_idx])
                     # preds[method].append(pred_sample_ls[min_idx])
 
-                    mae_ls.append(np.mean(mae_sample_ls))
+                    # mae_ls.append(np.mean(mae_sample_ls))
+                    mae_ls.append(abs(np.mean(mae_sample_ls) - np.mean(pred_sample_ls)))
                     preds[method].append(np.mean(pred_sample_ls))
                 else:
                     preds[method].append(flag)
@@ -278,12 +297,18 @@ def auto_correlation(data, outputs, cols=['q_x', 'q_y', 'q_z', 'q_w'], fs=10, wi
     gt['calrity'] = np.array(gt['calrity'])
     times = np.array(times)
 
+    # print(f'preds:{preds}')
+    # gt_test = gt['freq']
+    # print(f'gt:{gt_test}')
+
     # Draw results
     if visualize:
         vs.draw_autocorrelation_results(preds, gt, times, cols=cols, action_name=action_name)
     
     if return_r2:
         return mae, r2
+    if return_pgm:
+        return preds, gt['freq'], mae
     else:
         return mae
 
@@ -351,7 +376,7 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64, start_t=0, return_t=F
 
             peak_id = 0
             threshold = -0.1
-            while (clarity < threshold or pitch*60 > 35) and peak_id < len(peaks):
+            while (clarity < threshold or pitch*60 > 35) and peak_id < len(peaks): # pitch*60 > 35
                 lag = peaks[peak_id]
                 pitch = fs / lag
                 clarity = acf_filtered[lag] / acf_filtered[0]
@@ -360,9 +385,12 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64, start_t=0, return_t=F
             if clarity < threshold:
                 pitch = flag
 
-            # if pitch * 60 > 29.5 or pitch * 60 < 16:
+            # if pitch * 60 > 40 or pitch * 60 < 20:
             #     print(f"clarity: {clarity}, gt:{pitch * 60}")
             #     vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
+
+            # print(f"clarity: {clarity}, gt:{pitch * 60}")
+            # vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
 
             # print(has_draw[0])
             # print(i)

@@ -107,3 +107,91 @@ class FIR_filter:
         self.n += 1
 
         return e
+    
+def LMS(data_anc, NTAPS, LEARNING_RATE, sensor_names=['imu1','imu2'], cols=['q_x', 'q_y', 'q_z', 'q_w']):
+    outputs_dict_LMS = {'method':'LMS'}
+    
+    for col in cols:
+        d = data_anc[sensor_names[0] + '_' + col].to_numpy() # IMU1 (desire signal with more RR info.)
+        x = data_anc[sensor_names[1] + '_' + col].to_numpy() # IMU2 (reference noise)
+        f = FIR_filter(np.zeros(NTAPS))
+        y = np.empty(len(d))
+        
+        # DO FIR filter
+        for i in range((len(d))):
+            ref_noise = x[i]
+            canceller = f.filter(ref_noise)
+            output_signal = d[i] - canceller
+            f.lms(output_signal, LEARNING_RATE)
+            y[i] = output_signal
+        
+        outputs_dict_LMS[col] = y
+    
+    return outputs_dict_LMS
+
+def LMSLS(data_anc, NTAPS, LEARNING_RATE, sensor_names=['imu1','imu2'], cols=['q_x', 'q_y', 'q_z', 'q_w']):
+    outputs_dict_LMSLS = {'method':'LMS+LS'}
+    
+    for col in cols:
+        d = data_anc[sensor_names[0] + '_' + col].to_numpy() # IMU1 (desire signal with more RR info.)
+        x = data_anc[sensor_names[1] + '_' + col].to_numpy() # IMU2 (reference noise)
+        f = FIR_filter(np.zeros(NTAPS))
+        y = np.empty(len(d))
+
+
+        # Least Square Once
+        f.ls(x, d)
+        LEARNING_RATE = np.max(f.coefficients) / 100 # / 100
+        # print(f'LEARNING_RATE:{LEARNING_RATE}')
+        
+        # DO FIR filter
+        for i in range((len(d))):
+            ref_noise = x[i]
+            canceller = f.filter(ref_noise)
+            output_signal = d[i] - canceller
+            f.lms(output_signal, LEARNING_RATE)
+            y[i] = output_signal
+        
+        outputs_dict_LMSLS[col] = y
+
+    return outputs_dict_LMSLS
+
+def RLS(data_anc, NTAPS, delta, lam_rls, sensor_names=['imu1','imu2'], cols=['q_x', 'q_y', 'q_z', 'q_w']):
+    outputs_dict_RLS = {'method':'RLS'}
+    
+    for col in cols:
+        d = data_anc[sensor_names[0] + '_' + col].to_numpy() # IMU1 (desire signal with more RR info.)
+        x = data_anc[sensor_names[1] + '_' + col].to_numpy() # IMU2 (reference noise)
+        f = FIR_filter(np.zeros(NTAPS))
+        y = np.empty(len(d))
+        
+        # DO FIR filter
+        for i in range((len(d))):
+            ref_noise = x[i]
+            canceller = f.filter(ref_noise)
+            output_signal = d[i] - canceller
+            f.rls(output_signal, delta=delta, lam=lam_rls)
+            y[i] = output_signal
+        
+        outputs_dict_RLS[col] = y
+    
+    return outputs_dict_RLS
+
+def LRLS(data_anc, NTAPS, epsilon, lam_lrls, sensor_names=['imu1','imu2'], cols=['q_x', 'q_y', 'q_z', 'q_w']):
+    outputs_dict_LRLS = {'method':'LRLS'}
+    
+    for col in cols:
+        d = data_anc[sensor_names[0] + '_' + col].to_numpy() # IMU1 (desire signal with more RR info.)
+        x = data_anc[sensor_names[1] + '_' + col].to_numpy() # IMU2 (reference noise)
+        f = FIR_filter(np.zeros(NTAPS))
+        y = np.empty(len(d))
+        
+        # DO FIR filter
+        for i in range((len(d))):
+            ref_noise = x[i]
+            output_signal = f.lrls(x=ref_noise, d=d[i], N=len(d), epsilon=epsilon, lam=lam_lrls)
+            y[i] = output_signal
+        
+        outputs_dict_LRLS[col] = y
+
+    return outputs_dict_LRLS
