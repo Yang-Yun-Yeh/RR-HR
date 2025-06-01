@@ -18,6 +18,9 @@ pip install pyroomacoustics
 pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
 
 command:
+# ANC
+python ANC_action.py -f data/8P --window_size 256 --stride 64
+
 python generate_dataset.py -f data/hamham -n dataset/hamham
 python train.py --dataset_name hamham --model_name MLP_1D --visualize
 python test.py --dataset_name hamham --model_name MLP_1D --model_type MLP
@@ -66,7 +69,7 @@ python generate_dataset.py -f data/2P -n dataset/action/2P_16_2D --window_size 2
 
 # 8P_2D
 python generate_dataset.py -f data/8P -n dataset/8P_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1
-python generate_dataset.py -f data/8P -n dataset/action/8P_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --actio
+python generate_dataset.py -f data/8P -n dataset/action/8P_16_2D --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action
 
 python train.py --dataset_name 8P_16_2D --model_name MLP_8P_2D --model_type MLP -b 8 --visualize
 python train.py --dataset_name 8P_16_2D --model_name CNN_8P_2D --model_type CNN -b 8 --visualize
@@ -74,3 +77,38 @@ python train.py --dataset_name 8P_16_2D --model_name BiLSTM_8P_2D --model_type B
 python train.py --dataset_name 8P_16_2D --model_name GRU_8P_2D --model_type GRU -b 8 --visualize
 
 python test.py --dataset_name 8P_16_2D --model_name MLP_8P_2D --model_type MLP
+
+
+python generate_dataset.py -f data/8P -n dataset/8P_16_2D_BC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol
+python generate_dataset.py -f data/8P -n dataset/action/8P_16_2D_BC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol
+
+python train.py --dataset_name 8P_16_2D_BC --model_name MLP_8P_2D_BC --model_type MLP -b 8 --visualize
+python train.py --dataset_name 8P_16_2D_BC --model_name CNN_8P_2D_BC --model_type CNN -b 8 --visualize
+python train.py --dataset_name 8P_16_2D_BC --model_name BiLSTM_8P_2D_BC --model_type BiLSTM -b 8 --visualize
+python train.py --dataset_name 8P_16_2D_BC --model_name GRU_8P_2D_BC --model_type GRU -b 8 --visualize
+
+# VT
+python train.py --dataset_name 8P_16_2D_BC --model_name VT_8P_2D_BC --model_type VT -b 8 --visualize
+python train.py --dataset_name 8P_16_2D_BC --model_name VT_8P_BC_13 --model_type VT -b 8 --visualize
+python train.py --dataset_name 8P_16_2D_BC --model_name VT_8P_BC_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 8P_16_2D_BC --model_name VT_8P_BC_emht2 --model_type VT -b 8 --visualize
+
+# 8P2
+python generate_dataset.py -f data/8P -n dataset/8P2_BC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol
+python generate_dataset.py -f data/8P -n dataset/action/8P2_BC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol
+python train.py --dataset_name 8P2_BC --model_name VT_8P2_BC --model_type VT -b 8 --visualize
+python train.py --dataset_name 8P2_BC --model_name MLP_8P2_BC --model_type MLP -b 8 --visualize
+
+# 7.5P
+python generate_dataset.py -f data/7.5P -n dataset/7.5P_BC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol
+python generate_dataset.py -f data/7.5P -n dataset/action/7.5P_BC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol
+python train.py --dataset_name 7.5P_BC --model_name VT_7.5P_BC --model_type VT -b 8 --visualize
+python train.py --dataset_name 7.5P_BC --model_name VT_7.5P_BC_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 7.5P_BC --model_name MLP_7.5P_BC --model_type MLP -b 8 --visualize
+
+# 7.75P
+python generate_dataset.py -f data/7.75P -n dataset/7.75P_BC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol
+python generate_dataset.py -f data/7.75P -n dataset/action/7.75P_BC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol
+python train.py --dataset_name 7.75P_BC --model_name VT_7.75P_BC --model_type VT -b 8 --visualize
+python train.py --dataset_name 7.75P_BC --model_name VT_7.75P_BC_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 7.75P_BC --model_name MLP_7.75P_BC --model_type MLP -b 8 --visualize

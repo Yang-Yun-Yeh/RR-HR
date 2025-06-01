@@ -6,6 +6,7 @@ from datetime import datetime
 from utils.visualize import *
 from utils.signal_process import *
 from utils.model import *
+import utils.vision_transformer as VT
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -57,6 +58,8 @@ if __name__ == '__main__':
     train_loader = DataLoader(dataset_train, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(dataset_test, batch_size=args.batch_size, shuffle=True)
 
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.model_type == "MLP":
         # model = MLP(num_freq_bins, num_time_steps, num_channels=num_channels)
         model = MLP_out1(num_freq_bins, num_time_steps, num_channels=num_channels)
@@ -69,9 +72,11 @@ if __name__ == '__main__':
         model = BiLSTM(num_freq_bins, num_time_steps, num_channels=num_channels)
     elif args.model_type == "GRU":
         model = GRU(num_freq_bins, num_time_steps, num_channels=num_channels)
+    elif args.model_type == "VT":
+        model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, device=device)
+        # model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, num_heads=8, device=device) # patch_size=(h, w) (3, 3) (1, 3)
 
     # Train the model
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     now = datetime.now()
     if args.model_name == "model":
         model_name = now.strftime("%m%d_%H.%M.%S") # MM_DD_HH:mm:ss

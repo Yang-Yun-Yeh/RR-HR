@@ -628,7 +628,7 @@ def draw_learning_results_action_bar(mae_test, models_name=None, paper=False):
         
 
         ax.set_title(f'{action}')
-        ax.legend()
+        ax.legend(loc="upper right")
         plt.xticks(x, method_ls)
         ax.yaxis.grid(True)
         ax.set_ylabel('MAE (1/min)')
@@ -674,10 +674,12 @@ def draw_learning_results_action_relative(relative_mae, sigma_num=1, models_name
         
 
         ax.set_title(f'{action}')
-        ax.legend()
+        ax.legend(loc="upper right")
         # plt.errorbar(x, mean_ls, yerr=error_ls, fmt='o', capsize=5, color=colors[i])
         # plt.xticks(x, method_ls, rotation=45)
         plt.xticks(x, method_ls)
+        if len(x) == 2:
+            ax.set_xlim(x[0] - 1, x[-1] + 1)
         ax.yaxis.grid(True)
         ax.set_ylabel('Relative MAE (%)')
         ax.set_ylim(0, y_axis_upper)

@@ -24,6 +24,7 @@ def parse_args():
     parser.add_argument("--nperseg", type=int, default=128)
     parser.add_argument("--noverlap", type=int, default=64)
     parser.add_argument("--out_1", action='store_true')
+    parser.add_argument("--byCol", action='store_true')
 
     # Type
     parser.add_argument("--action", action='store_true')
@@ -55,7 +56,8 @@ if __name__ == '__main__':
                                             stride=args.stride,
                                             nperseg=args.nperseg,
                                             noverlap=args.noverlap,
-                                            out_1=args.out_1)
+                                            out_1=args.out_1,
+                                            byCol=args.byCol,)
         else:
             spectrograms, gts = prepare_action_data(target_folder,
                                             fs=args.fs,
@@ -69,7 +71,8 @@ if __name__ == '__main__':
                                             stride=args.stride,
                                             nperseg=args.nperseg,
                                             noverlap=args.noverlap,
-                                            out_1=args.out_1)
+                                            out_1=args.out_1,
+                                            byCol=args.byCol,)
 
         pickle.dump(
             {'input': spectrograms, 'gt': gts},

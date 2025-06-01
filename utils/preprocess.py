@@ -2,13 +2,17 @@ import os
 import pandas as pd
 import numpy as np
 from collections import defaultdict
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+
 
 try:
      from . import signal_process as sp
+     from . import visualize as vs
 except:
      import signal_process as sp
+     import visualize as vs
 
-def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False):
+def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     omega_axes = ['omega_u', 'omega_v', 'omega_w']
@@ -86,14 +90,15 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
             Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls].values
             segmented_spectrograms, segmented_gt = sp.segment_data(Q, data_sml["Force"], window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1)
 
+            # segmented_spectrograms: (num_windows, 16, freq_bins, time_steps)
             # min-Max normalization
             segmented_spectrograms, segmented_gt, times = sp.segment_data(Q, data_sml["Force"], return_t=True, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1)
             if segmented_spectrograms.shape[1] == 8:
-                segmented_spectrograms = sp.normalize_spectrogram(segmented_spectrograms)
+                segmented_spectrograms = sp.normalize_spectrogram(segmented_spectrograms, byCol=byCol)
             elif segmented_spectrograms.shape[1] == 16:
-                segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8])
-                segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14])
-                segmented_spectrograms[:, 14:] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:])
+                segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8], byCol=byCol)
+                segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14], byCol=byCol)
+                segmented_spectrograms[:, 14:] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:], byCol=byCol)
                 
             # print(f'sepctrograms:{segmented_spectrograms.shape}')
             # print(f'gt:{segmented_gt.shape}')
@@ -110,7 +115,7 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
 
     return spectrograms, gts
 
-def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False):
+def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     omega_axes = ['omega_u', 'omega_v', 'omega_w']
@@ -192,11 +197,11 @@ def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_p
     # min-Max normalization
     segmented_spectrograms, segmented_gt, times = sp.segment_data(Q, data_sml["Force"], return_t=True, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1)
     if segmented_spectrograms.shape[1] == 8:
-        segmented_spectrograms = sp.normalize_spectrogram(segmented_spectrograms)
+        segmented_spectrograms = sp.normalize_spectrogram(segmented_spectrograms, byCol=byCol)
     elif segmented_spectrograms.shape[1] == 16:
-        segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8])
-        segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14])
-        segmented_spectrograms[:, 14:] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:])
+        segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8], byCol=byCol)
+        segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14], byCol=byCol)
+        segmented_spectrograms[:, 14:] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:], byCol=byCol)
 
     # print(f'sepctrograms:{segmented_spectrograms.shape}')
     # print(f'gt:{segmented_gt.shape}')
@@ -213,7 +218,7 @@ def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_p
 
     return spectrograms, gts, times
 
-def prepare_action_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False):
+def prepare_action_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     omega_axes = ['omega_u', 'omega_v', 'omega_w']
@@ -300,11 +305,11 @@ def prepare_action_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_s
             # min-Max normalization
             segmented_spectrograms, segmented_gt, times = sp.segment_data(Q, data_sml["Force"], return_t=True, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1)
             if segmented_spectrograms.shape[1] == 8:
-                segmented_spectrograms = sp.normalize_spectrogram(segmented_spectrograms)
+                segmented_spectrograms = sp.normalize_spectrogram(segmented_spectrograms, byCol=byCol)
             elif segmented_spectrograms.shape[1] == 16:
-                segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8])
-                segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14])
-                segmented_spectrograms[:, 14:] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:])
+                segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8], byCol=byCol)
+                segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14], byCol=byCol)
+                segmented_spectrograms[:, 14:] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:], byCol=byCol)
                 
             # print(f'sepctrograms:{segmented_spectrograms.shape}')
             # print(f'gt:{segmented_gt.shape}')
@@ -325,3 +330,114 @@ def prepare_action_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_s
         print(f'gt[{k}]:{gts[k].shape}')
 
     return spectrograms, gts
+
+def prepare_data_anc(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, visualize=True):
+    sensor_names=['imu1','imu2']
+    cols = ['q_x', 'q_y', 'q_z', 'q_w']
+    block_files = ['run_0514_1048.csv']
+
+    method_ls = ['LMS', 'LMS+LS', 'RLS', 'LRLS']
+    pred_test = {key:{} for key in method_ls}
+    gt_test = {}
+    mae_test = {key:{} for key in method_ls} # overall mae in each [method][action]
+    relative_mae = {key:{} for key in method_ls} # each sample point relative mae in [method][action]
+
+    # all sample points
+    pred_ls = []
+    gt_ls = []
+    # iterate all files
+    for file in os.listdir(dir):
+        filename = os.fsdecode(file)
+        # if filename.endswith(".csv") and (filename not in block_files):
+        if filename.endswith(".csv"):
+            print(os.path.join(dir, filename))
+            action_name = filename.split("_")[0]
+            
+            # load data
+            data = pd.read_csv(os.path.join(dir, filename))
+            data.columns = [
+                "Timestamp",
+                "imu1_q_x",
+                "imu1_q_y",
+                "imu1_q_z",
+                "imu1_q_w",
+                "imu2_q_x",
+                "imu2_q_y",
+                "imu2_q_z",
+                "imu2_q_w",
+                "Force",
+                "RR",
+            ]
+
+            data = data.iloc[start_pt:end_pt]
+
+            # align delay
+            data = sp.align_delay(data, delay=10)
+            data["Timestamp"] = pd.to_datetime(data["Timestamp"])
+            data = data.set_index("Timestamp")
+
+            # align IMU
+            q_corr = sp.Q_RANSAC(data[0:still_pt], pool=pool, d=d)
+            target, skew = 'imu1', 'imu2'
+            Q_skew = data[[skew + '_q_x', skew + '_q_y', skew + '_q_z', skew + '_q_w']].to_numpy()
+            Q_aligned = sp.align_quaternion(q_corr, Q_skew) # (sample num, 4)
+            data_aligned = data.copy()
+
+            for i, col in enumerate(cols):
+                data_aligned[[skew + '_' + col]] = Q_aligned[:, i].reshape(-1, 1)
+
+            # specify data range
+            data_anc = data_aligned.copy() # data used in sml
+            data_anc = data_anc[still_pt+after_still_pt:]
+
+            outputs = sp.anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
+            # print(f"outputs:{outputs}")
+            pred, gt, mae = sp.auto_correlation(
+                data_anc,
+                outputs=outputs,
+                window=window_size/fs,
+                overlap=(window_size-stride)/fs,
+                visualize=False,
+                return_pgm=True
+            )
+
+            # calculate error
+            for i, method in enumerate(method_ls):
+                if action_name in pred_test[method]:
+                    pred_test[method][action_name].extend(list(pred[method]))
+                    if i == 0:
+                        gt_test[action_name].extend(list(gt))
+                    relative_mae[method][action_name].extend(list(abs(pred[method] - gt) / gt * 100))
+                else:
+                    pred_test[method][action_name] = list(pred[method])
+                    if i == 0:
+                        gt_test[action_name] = list(gt)
+                    relative_mae[method][action_name] = list(abs(pred[method] - gt) / gt * 100)
+
+            pred_ls.extend(list(pred))
+            gt_ls.extend(list(gt))
+            # break
+
+    # calculate overall error
+    action_ls = pred_test[next(iter(pred_test))].keys()
+    if len(action_ls) == 4:
+        action_ls = ['sit', 'stand', 'walk', 'run']
+
+    for method in method_ls:
+        pred_test[method] = {k : pred_test[method][k] for k in action_ls}
+        gt_test = {k : gt_test[k] for k in action_ls}
+        relative_mae[method] = {k : relative_mae[method][k] for k in action_ls}
+
+    for i, method in enumerate(method_ls):
+        print(f"{method}:")
+        for action_name in action_ls:
+            mae_test[method][action_name] = mean_absolute_error(gt_test[action_name], pred_test[method][action_name])
+            avg_l1_loss = mae_test[method][action_name]
+            avg_relative_mae = np.mean(relative_mae[method][action_name])
+            print(f"{action_name} - L1 Loss: {avg_l1_loss:.4f} 1/min, E%: {avg_relative_mae:.4f}%")
+        print()
+    
+    if visualize:
+        vs.draw_learning_results_action(pred_test, gt_test, mae_test, models_name=method_ls, paper=True)
+        vs.draw_learning_results_action_bar(mae_test, models_name=method_ls)
+        vs.draw_learning_results_action_relative(relative_mae, sigma_num=1, models_name=method_ls)
