@@ -12,15 +12,17 @@ except:
      import signal_process as sp
      import visualize as vs
 
-def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
+def prepare_data(dir, fs=10, sp_num=16, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     omega_axes = ['omega_u', 'omega_v', 'omega_w']
     ang_speed_cols = ['omega']
+    anc_methods = ['LMS', 'LMS+LS', 'RLS', 'LRLS']
 
     q_col_ls = []
     omega_col_ls = []
     ang_speed_col_ls = []
+    anc_col_ls = []
 
     for imu in sensor_names:
         for col in cols:
@@ -29,6 +31,10 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
             omega_col_ls.append(imu + "_" + col)
         for col in ang_speed_cols:
             ang_speed_col_ls.append(imu + "_" + col)
+
+    for anc_method in anc_methods:
+        for col in cols:
+            anc_col_ls.append(anc_method + "_" + col)
 
     spectrograms, gts = [], []
     # iterate all files
@@ -72,6 +78,7 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
 
             # specify data range
             data_sml = data_aligned.copy() # data used in sml
+            data_anc = data_aligned.copy() # data used in anc
             data_sml = data_sml[still_pt+after_still_pt:]
 
             # data_sml.loc[:, "Force"] = sp.butter_filter(data_sml["Force"], cutoff=1) # cutoff=0.66
@@ -86,8 +93,25 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
                 
                 data_sml.loc[:, imu + "_" + ang_speed_cols[0]] = ang_speed
 
+            # calculate ANC features
+            if sp_num == 32:
+                anc_outputs = sp.anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
+                for anc_output in anc_outputs:
+                    method = anc_output['method']
+                    for col in cols:
+                        data_sml.loc[:, method + "_" + col] = anc_output[col][still_pt+after_still_pt:]
+
+                
+            # print(f'anc_outputs:{anc_outputs}')            
+
             # Q: (sample_num, channel_num)
-            Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls].values
+            if sp_num == 8:
+                Q = data_sml[q_col_ls].values
+            elif sp_num == 16:
+                Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls].values
+            elif sp_num == 32:
+                Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls + anc_col_ls].values
+
             segmented_spectrograms, segmented_gt = sp.segment_data(Q, data_sml["Force"], window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1)
 
             # segmented_spectrograms: (num_windows, 16, freq_bins, time_steps)
@@ -99,7 +123,15 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
                 segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8], byCol=byCol)
                 segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14], byCol=byCol)
                 segmented_spectrograms[:, 14:] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:], byCol=byCol)
-                
+            elif segmented_spectrograms.shape[1] == 32:
+                segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8], byCol=byCol)
+                segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14], byCol=byCol)
+                segmented_spectrograms[:, 14:16] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:16], byCol=byCol)
+                segmented_spectrograms[:, 16:20] = sp.normalize_spectrogram(segmented_spectrograms[:, 16:20], byCol=byCol)
+                segmented_spectrograms[:, 20:24] = sp.normalize_spectrogram(segmented_spectrograms[:, 20:24], byCol=byCol)
+                segmented_spectrograms[:, 24:28] = sp.normalize_spectrogram(segmented_spectrograms[:, 24:28], byCol=byCol)
+                segmented_spectrograms[:, 28:32] = sp.normalize_spectrogram(segmented_spectrograms[:, 28:32], byCol=byCol)
+            
             # print(f'sepctrograms:{segmented_spectrograms.shape}')
             # print(f'gt:{segmented_gt.shape}')
             # exit()
@@ -115,15 +147,17 @@ def prepare_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt
 
     return spectrograms, gts
 
-def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
+def prepare_file(file, fs=10, sp_num=16, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     omega_axes = ['omega_u', 'omega_v', 'omega_w']
     ang_speed_cols = ['omega']
+    anc_methods = ['LMS', 'LMS+LS', 'RLS', 'LRLS']
 
     q_col_ls = []
     omega_col_ls = []
     ang_speed_col_ls = []
+    anc_col_ls = []
 
     for imu in sensor_names:
         for col in cols:
@@ -132,6 +166,10 @@ def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_p
             omega_col_ls.append(imu + "_" + col)
         for col in ang_speed_cols:
             ang_speed_col_ls.append(imu + "_" + col)
+
+    for anc_method in anc_methods:
+        for col in cols:
+            anc_col_ls.append(anc_method + "_" + col)
 
     spectrograms, gts, times = [], [], []
 
@@ -169,6 +207,7 @@ def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_p
 
     # specify data range
     data_sml = data_aligned.copy() # data used in sml
+    data_anc = data_aligned.copy() # data used in anc
     data_sml = data_sml[still_pt+after_still_pt:]
 
     # data_sml.loc[:, "Force"] = sp.butter_filter(data_sml["Force"], cutoff=1) # cutoff=0.66
@@ -184,14 +223,26 @@ def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_p
         
         data_sml.loc[:, imu + "_" + ang_speed_cols[0]] = ang_speed
 
-    # data_sml.interpolate()
+    # calculate ANC features
+    if sp_num == 32:
+        anc_outputs = sp.anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
+        for anc_output in anc_outputs:
+            method = anc_output['method']
+            for col in cols:
+                data_sml.loc[:, method + "_" + col] = anc_output[col][still_pt+after_still_pt:]
 
     # nan_indices = data_sml.isna()
     # print(f"data_sml nan_indices:{nan_indices}")
 
     # Q: (sample_num, channel_num)
     # print(q_col_ls + omega_col_ls + ang_speed_col_ls)
-    Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls].values
+    # Q: (sample_num, channel_num)
+    if sp_num == 8:
+        Q = data_sml[q_col_ls].values
+    elif sp_num == 16:
+        Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls].values
+    elif sp_num == 32:
+        Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls + anc_col_ls].values
     # Q = np.concatenate((q_normalize, omega_normalize, ang_speed_normalize), axis=1)
 
     # min-Max normalization
@@ -202,6 +253,14 @@ def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_p
         segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8], byCol=byCol)
         segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14], byCol=byCol)
         segmented_spectrograms[:, 14:] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:], byCol=byCol)
+    elif segmented_spectrograms.shape[1] == 32:
+        segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8], byCol=byCol)
+        segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14], byCol=byCol)
+        segmented_spectrograms[:, 14:16] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:16], byCol=byCol)
+        segmented_spectrograms[:, 16:20] = sp.normalize_spectrogram(segmented_spectrograms[:, 16:20], byCol=byCol)
+        segmented_spectrograms[:, 20:24] = sp.normalize_spectrogram(segmented_spectrograms[:, 20:24], byCol=byCol)
+        segmented_spectrograms[:, 24:28] = sp.normalize_spectrogram(segmented_spectrograms[:, 24:28], byCol=byCol)
+        segmented_spectrograms[:, 28:32] = sp.normalize_spectrogram(segmented_spectrograms[:, 28:32], byCol=byCol)
 
     # print(f'sepctrograms:{segmented_spectrograms.shape}')
     # print(f'gt:{segmented_gt.shape}')
@@ -218,15 +277,17 @@ def prepare_file(file, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_p
 
     return spectrograms, gts, times
 
-def prepare_action_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
+def prepare_action_data(dir, fs=10, sp_num=16, start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     omega_axes = ['omega_u', 'omega_v', 'omega_w']
     ang_speed_cols = ['omega']
+    anc_methods = ['LMS', 'LMS+LS', 'RLS', 'LRLS']
 
     q_col_ls = []
     omega_col_ls = []
     ang_speed_col_ls = []
+    anc_col_ls = []
 
     for imu in sensor_names:
         for col in cols:
@@ -235,6 +296,10 @@ def prepare_action_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_s
             omega_col_ls.append(imu + "_" + col)
         for col in ang_speed_cols:
             ang_speed_col_ls.append(imu + "_" + col)
+
+    for anc_method in anc_methods:
+        for col in cols:
+            anc_col_ls.append(anc_method + "_" + col)
 
     spectrograms, gts = {}, {}
     # iterate all files
@@ -284,6 +349,7 @@ def prepare_action_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_s
 
             # specify data range
             data_sml = data_aligned.copy() # data used in sml
+            data_anc = data_aligned.copy() # data used in anc
             data_sml = data_sml[still_pt+after_still_pt:]
 
             # data_sml.loc[:, "Force"] = sp.butter_filter(data_sml["Force"], cutoff=1) # cutoff=0.66
@@ -298,8 +364,22 @@ def prepare_action_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_s
                 
                 data_sml.loc[:, imu + "_" + ang_speed_cols[0]] = ang_speed
 
+            # calculate ANC features
+            if sp_num == 32:
+                anc_outputs = sp.anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
+                for anc_output in anc_outputs:
+                    method = anc_output['method']
+                    for col in cols:
+                        data_sml.loc[:, method + "_" + col] = anc_output[col][still_pt+after_still_pt:]
+
             # Q: (sample_num, channel_num)
-            Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls].values
+            if sp_num == 8:
+                Q = data_sml[q_col_ls].values
+            elif sp_num == 16:
+                Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls].values
+            elif sp_num == 32:
+                Q = data_sml[q_col_ls + omega_col_ls + ang_speed_col_ls + anc_col_ls].values
+
             segmented_spectrograms, segmented_gt = sp.segment_data(Q, data_sml["Force"], window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1)
 
             # min-Max normalization
@@ -310,6 +390,14 @@ def prepare_action_data(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_s
                 segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8], byCol=byCol)
                 segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14], byCol=byCol)
                 segmented_spectrograms[:, 14:] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:], byCol=byCol)
+            elif segmented_spectrograms.shape[1] == 32:
+                segmented_spectrograms[:, :8] = sp.normalize_spectrogram(segmented_spectrograms[:, :8], byCol=byCol)
+                segmented_spectrograms[:, 8:14] = sp.normalize_spectrogram(segmented_spectrograms[:, 8:14], byCol=byCol)
+                segmented_spectrograms[:, 14:16] = sp.normalize_spectrogram(segmented_spectrograms[:, 14:16], byCol=byCol)
+                segmented_spectrograms[:, 16:20] = sp.normalize_spectrogram(segmented_spectrograms[:, 16:20], byCol=byCol)
+                segmented_spectrograms[:, 20:24] = sp.normalize_spectrogram(segmented_spectrograms[:, 20:24], byCol=byCol)
+                segmented_spectrograms[:, 24:28] = sp.normalize_spectrogram(segmented_spectrograms[:, 24:28], byCol=byCol)
+                segmented_spectrograms[:, 28:32] = sp.normalize_spectrogram(segmented_spectrograms[:, 28:32], byCol=byCol)
                 
             # print(f'sepctrograms:{segmented_spectrograms.shape}')
             # print(f'gt:{segmented_gt.shape}')
