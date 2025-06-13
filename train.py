@@ -73,7 +73,7 @@ if __name__ == '__main__':
     elif args.model_type == "GRU":
         model = GRU(num_freq_bins, num_time_steps, num_channels=num_channels)
     elif args.model_type == "VT":
-        # model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, device=device)
+        # model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, device=device) # patch_size=(h, w)=(3, 3)
         model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, num_heads=8, device=device) # patch_size=(h, w)=(3, 3)
 
     # Train the model

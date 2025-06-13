@@ -481,6 +481,96 @@ def plot_spectrogram_16(spectrograms, sensor_names=['imu1','imu2'], q_cols=['q_x
     fig.supylabel('Frequency Bins')
     plt.show()
 
+# spectrograms: (channel_nums, freq_bins, time_steps)
+def plot_spectrogram_32(spectrograms, sensor_names=['imu1','imu2'], q_cols=['q_x', 'q_y', 'q_z', 'q_w'], omega_cols=['omega_u', 'omega_v', 'omega_w'], as_cols=['omega'], anc_methods = ['LMS', 'LMS+LS', 'RLS', 'LRLS']):
+    titles_q = []
+    for i in range(len(q_cols)):
+        titles_q.append(f'${q_cols[i]}$')
+
+    titles_omega = []
+    for i in range(len(omega_cols)):
+        titles_omega.append(f'$\{omega_cols[i]}$')
+
+    titles_as = []
+    for i in range(len(as_cols)):
+        titles_as.append(f'$\{as_cols[i]}$')
+
+    titles_anc = []
+    for anc_method in anc_methods:
+        titles_anc.append(f'${anc_method}$')
+
+
+    title = "Spectrogram"
+    cmap = "viridis"
+
+    row_num = 8
+    fig = plt.figure(figsize=(15, 4 * row_num), layout="constrained")
+    spec = fig.add_gridspec(row_num, len(titles_q))
+    ax_ls = []
+
+    row = 0
+    count = 0
+    # quaternion
+    for k, key in enumerate(sensor_names):
+        if key not in sensor_names:
+            continue
+        for i in range(len(titles_q)):
+            ax = fig.add_subplot(spec[row, i % len(titles_q)])
+            a = ax.imshow(spectrograms[count], aspect="auto", origin="lower", cmap=cmap)
+            # ax.set_xlabel("Time Steps")
+            # ax.set_ylabel("Frequency Bins")
+            ax.set_title(key + " " + titles_q[i])
+
+            # show color bar
+            plt.colorbar(a, ax=ax)
+            count += 1
+        row += 1
+
+    # angular velocity
+    for k, key in enumerate(sensor_names):
+        if key not in sensor_names:
+            continue
+        for i in range(len(titles_omega)):
+            ax = fig.add_subplot(spec[row, i % len(titles_omega)])
+            a = ax.imshow(spectrograms[count], aspect="auto", origin="lower", cmap=cmap)
+            ax.set_title(key + " " + titles_omega[i])
+
+            # show color bar
+            plt.colorbar(a, ax=ax)
+            count += 1
+        row += 1
+
+    row -= 2
+    # angular speed
+    for k, key in enumerate(sensor_names):
+        if key not in sensor_names:
+            continue
+        for i in range(len(titles_as)):
+            ax = fig.add_subplot(spec[row, 3 + i % len(titles_omega)])
+            a = ax.imshow(spectrograms[count], aspect="auto", origin="lower", cmap=cmap)
+            ax.set_title(key + " " + titles_as[i])
+
+            # show color bar
+            plt.colorbar(a, ax=ax)
+            count += 1
+        row += 1
+
+    # ANC
+    for i in range(len(titles_anc)):
+        for j in range(len(titles_q)):
+            ax = fig.add_subplot(spec[row, j % len(titles_anc)])
+            a = ax.imshow(spectrograms[count], aspect="auto", origin="lower", cmap=cmap)
+            ax.set_title(titles_anc[i] + " " + titles_q[j])
+
+            # show color bar
+            plt.colorbar(a, ax=ax)
+            count += 1
+        row += 1
+    
+    fig.supxlabel('Time Steps')
+    fig.supylabel('Frequency Bins')
+    plt.show()
+
 def draw_loss_epoch(mse_train_ls, l1_train_ls, mse_test_ls, l1_test_ls, name="model"):
     colors = ['blue', 'orange']
     titles = ['MSE loss', 'L1 loss (1/min)']
