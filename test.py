@@ -7,6 +7,7 @@ from utils.preprocess import *
 from utils.visualize import *
 from utils.signal_process import *
 from utils.model import *
+import utils.vision_transformer as VT
 
 import torch
 from torch.utils.data import Dataset, DataLoader
@@ -44,6 +45,7 @@ if __name__ == '__main__':
     test_loader = DataLoader(dataset_test, batch_size=1, shuffle=True)
 
     # Load model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if args.model_type == "MLP":
         # model = MLP(num_freq_bins, num_time_steps, num_channels=num_channels)
         model = MLP_out1(num_freq_bins, num_time_steps, num_channels=num_channels)
@@ -56,9 +58,11 @@ if __name__ == '__main__':
         model = BiLSTM(num_freq_bins, num_time_steps, num_channels=num_channels)
     elif args.model_type == "GRU":
         model = GRU(num_freq_bins, num_time_steps, num_channels=num_channels)
+    elif args.model_type == "VT":
+        # model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, device=device) # patch_size=(h, w)=(3, 3)
+        model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, num_heads=8, device=device) # patch_size=(h, w)=(3, 3)
 
     model.load_state_dict(torch.load(f'./models/{args.model_name}.pt'))
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Evaluate model in whole testing set
     mse, mae = evaluate_model(model, test_loader, device=device)

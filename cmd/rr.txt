@@ -112,3 +112,29 @@ python generate_dataset.py -f data/7.75P -n dataset/action/7.75P_BC --window_siz
 python train.py --dataset_name 7.75P_BC --model_name VT_7.75P_BC --model_type VT -b 8 --visualize
 python train.py --dataset_name 7.75P_BC --model_name VT_7.75P_BC_emt2 --model_type VT -b 8 --visualize
 python train.py --dataset_name 7.75P_BC --model_name MLP_7.75P_BC --model_type MLP -b 8 --visualize
+python train.py --dataset_name 7.75P_BC --model_name CNN_7.75P_BC --model_type CNN -b 8 --visualize
+
+# 7.75P_32
+python generate_dataset.py -f data/7.75P -n dataset/7.75P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --sp_num 32
+python generate_dataset.py -f data/7.75P -n dataset/action/7.75P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --sp_num 32
+python train.py --dataset_name 7.75P_32 --model_name MLP_7.75P_32 --model_type MLP -b 8 --visualize
+python train.py --dataset_name 7.75P_32 --model_name CNN_7.75P_32 --model_type CNN -b 8 --visualize
+python train.py --dataset_name 7.75P_32 --model_name VT_7.75P_32_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 7.75P_32 --model_name VT_7.75P_32_emht2 --model_type VT -b 8 --visualize
+
+# 10P_32
+python generate_dataset.py -f data/10P -n dataset/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --sp_num 32
+python generate_dataset.py -f data/10P -n dataset/action/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --sp_num 32
+python train.py --dataset_name 10P_32 --model_name MLP_10P_32 --model_type MLP -b 8 --visualize
+python train.py --dataset_name 10P_32 --model_name CNN_10P_32 --model_type CNN -b 8 --visualize
+python train.py --dataset_name 10P_32 --model_name VT_10P_32_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 10P_32 --model_name VT_10P_32_emht2 --model_type VT -b 8 --visualize
+python test.py --dataset_name 10P_32 --model_name VT_10P_32_emt2 --model_type VT
+
+# 10P_16
+python generate_dataset.py -f data/10P -n dataset/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --sp_num 16
+python generate_dataset.py -f data/10P -n dataset/action/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --sp_num 16
+python train.py --dataset_name 10P_16 --model_name MLP_10P_16 --model_type MLP -b 8 --visualize
+python train.py --dataset_name 10P_16 --model_name CNN_10P_16 --model_type CNN -b 8 --visualize
+python train.py --dataset_name 10P_16 --model_name VT_10P_16_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 10P_16 --model_name VT_10P_16_emht2 --model_type VT -b 8 --visualize

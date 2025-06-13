@@ -9,8 +9,8 @@ from torch.utils.data import Dataset, DataLoader
 
 if __name__ == '__main__':
     # Test one file
-    # action_name = "run_stand_2"
-    # path_file = f'./data/8P/train/{action_name}.csv'
+    action_name = "run_stand_2"
+    path_file = f'./data/8P/train/{action_name}.csv'
 
     # action_name = "walk_stand_0407_0858" # walk_stand_0407_0852, walk_stand_0407_0858, walk_stand_0407_0903
     # path_file = f'./data/2P/test/{action_name}.csv'
@@ -19,8 +19,8 @@ if __name__ == '__main__':
     # stand_0516_0542, stand_0516_0548
     # walk_0516_0644, *walk_0516_0650, *walk_0516_0701, walk_0516_0707, walk_0516_0713
     # **run_0516_0735, *run_0516_0741, run_0516_0752, *run_0516_0807, run_0516_0812
-    action_name = "run_0516_0741"
-    path_file = f'./data/5_16/kiri/{action_name}.csv'
+    # action_name = "run_0516_0741"
+    # path_file = f'./data/5_16/kiri/{action_name}.csv'
 
     # action_name = "walk_0514_1043" # sit_0514_1030, walk_0514_1043, walk_0520_0730, *walk_0520_0901, walk_0520_1031
     # path_file = f'./data/8P/test/{action_name}.csv'
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     noverlap=64
     out1=True
 
-    spectrograms_file, gts_file, times_file = prepare_file(path_file, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out1)
+    spectrograms_file, gts_file, times_file = prepare_file(path_file, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out1, byCol=True)
     dataset_file= IMUSpectrogramDataset(spectrograms_file, gts_file)
     file_loader = DataLoader(dataset_file, batch_size=1, shuffle=False)
 
