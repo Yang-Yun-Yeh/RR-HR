@@ -356,48 +356,6 @@ def draw_autocorrelation_results(preds, gt, times, cols=['q_x', 'q_y', 'q_z', 'q
     plt.show()
 
 # spectrograms: (channel_nums, freq_bins, time_steps)
-def plot_spectrogram(spectrograms, sensor_names=['imu1','imu2'], cols=['q_x', 'q_y', 'q_z', 'q_w']):
-    """
-    Visualizes a spectrogram.
-    
-    Args:
-        spectrogram (numpy.ndarray or torch.Tensor): 2D array of shape (freq_bins, time_steps).
-        title (str): Title of the plot.
-        cmap (str): Colormap for visualization.
-    """
-    # if isinstance(spectrogram, torch.Tensor):
-    #     spectrogram = spectrogram.cpu().numpy()  # Convert tensor to numpy
-
-    titles = []
-    for i in range(len(cols)):
-        titles.append(f'${cols[i]}$')
-
-    title = "Spectrogram"
-    cmap = "viridis"
-
-    row_num = len(sensor_names)
-    fig = plt.figure(figsize=(15, (spectrograms.shape[0] // 2) * row_num), layout="constrained")
-    spec = fig.add_gridspec(row_num, len(titles))
-    ax_ls = []
-
-    for k, key in enumerate(sensor_names):
-        if key not in sensor_names:
-            continue
-        for i in range(len(titles)):
-            ax = fig.add_subplot(spec[k, i % len(cols)])
-            a = ax.imshow(spectrograms[k * (spectrograms.shape[0] // 2) + i % len(cols)], aspect="auto", origin="lower", cmap=cmap)
-            # ax.set_xlabel("Time Steps")
-            # ax.set_ylabel("Frequency Bins")
-            ax.set_title(key + " " + titles[i])
-
-            # show color bar
-            plt.colorbar(a, ax=ax)
-    
-    fig.supxlabel('Time Steps')
-    fig.supylabel('Frequency Bins')
-    plt.show()
-
-# spectrograms: (channel_nums, freq_bins, time_steps)
 def plot_spectrogram_16(spectrograms, sensor_names=['imu1','imu2'], q_cols=['q_x', 'q_y', 'q_z', 'q_w'], omega_cols=['omega_u', 'omega_v', 'omega_w'], as_cols=['omega']):
     """
     Visualizes a spectrogram.
@@ -566,6 +524,110 @@ def plot_spectrogram_32(spectrograms, sensor_names=['imu1','imu2'], q_cols=['q_x
             plt.colorbar(a, ax=ax)
             count += 1
         row += 1
+    
+    fig.supxlabel('Time Steps')
+    fig.supylabel('Frequency Bins')
+    plt.show()
+
+# spectrograms: (channel_nums, freq_bins, time_steps)
+def plot_spectrogram(spectrograms, features = ['Q', 'omega', 'omega_l2', 'ANC'], sensor_names=['imu1','imu2'], q_cols=['q_x', 'q_y', 'q_z', 'q_w'], omega_cols=['omega_u', 'omega_v', 'omega_w'], as_cols=['omega'], anc_methods = ['LMS', 'LMS+LS', 'RLS', 'LRLS']):
+    titles_q = []
+    for i in range(len(q_cols)):
+        titles_q.append(f'${q_cols[i]}$')
+
+    titles_omega = []
+    for i in range(len(omega_cols)):
+        titles_omega.append(f'$\{omega_cols[i]}$')
+
+    titles_as = []
+    for i in range(len(as_cols)):
+        titles_as.append(f'$\{as_cols[i]}$')
+
+    titles_anc = []
+    for anc_method in anc_methods:
+        titles_anc.append(f'${anc_method}$')
+
+
+    title = "Spectrogram"
+    cmap = "viridis"
+
+    row_num = 0
+    if 'Q' in features:
+        row_num += 2
+    if 'omega' in features:
+        row_num += 2
+    if 'omega_l2' in features and 'omega' not in features:
+        row_num += 2
+    if 'ANC' in features:
+        row_num += 4
+
+    fig = plt.figure(figsize=(15, 4 * row_num), layout="constrained")
+    spec = fig.add_gridspec(row_num, len(titles_q))
+
+    row = 0
+    count = 0
+
+    # quaternion
+    if 'Q' in features:
+        for k, key in enumerate(sensor_names):
+            if key not in sensor_names:
+                continue
+            for i in range(len(titles_q)):
+                ax = fig.add_subplot(spec[row, i % len(titles_q)])
+                a = ax.imshow(spectrograms[count], aspect="auto", origin="lower", cmap=cmap)
+                # ax.set_xlabel("Time Steps")
+                # ax.set_ylabel("Frequency Bins")
+                ax.set_title(key + " " + titles_q[i])
+
+                # show color bar
+                plt.colorbar(a, ax=ax)
+                count += 1
+            row += 1
+
+    # angular velocity
+    if 'omega' in features:
+        for k, key in enumerate(sensor_names):
+            if key not in sensor_names:
+                continue
+            for i in range(len(titles_omega)):
+                ax = fig.add_subplot(spec[row, i % len(titles_omega)])
+                a = ax.imshow(spectrograms[count], aspect="auto", origin="lower", cmap=cmap)
+                ax.set_title(key + " " + titles_omega[i])
+
+                # show color bar
+                plt.colorbar(a, ax=ax)
+                count += 1
+            row += 1
+
+    
+    # angular speed
+    if 'omega_l2' in features:
+        row -= 2
+        for k, key in enumerate(sensor_names):
+            if key not in sensor_names:
+                continue
+            for i in range(len(titles_as)):
+                ax = fig.add_subplot(spec[row, 3])
+                a = ax.imshow(spectrograms[count], aspect="auto", origin="lower", cmap=cmap)
+                ax.set_title(key + " " + titles_as[i])
+
+                # show color bar
+                plt.colorbar(a, ax=ax)
+                count += 1
+            row += 1
+
+    # ANC
+    if 'ANC' in features:
+        for i in range(len(titles_anc)):
+            for j in range(len(titles_q)):
+                ax = fig.add_subplot(spec[row, j % len(titles_anc)])
+                a = ax.imshow(spectrograms[count], aspect="auto", origin="lower", cmap=cmap)
+                ax.set_title(titles_anc[i] + " " + titles_q[j])
+
+                # show color bar
+                plt.colorbar(a, ax=ax)
+                count += 1
+            row += 1
     
     fig.supxlabel('Time Steps')
     fig.supylabel('Frequency Bins')
