@@ -138,3 +138,24 @@ python train.py --dataset_name 10P_16 --model_name MLP_10P_16 --model_type MLP -
 python train.py --dataset_name 10P_16 --model_name CNN_10P_16 --model_type CNN -b 8 --visualize
 python train.py --dataset_name 10P_16 --model_name VT_10P_16_emt2 --model_type VT -b 8 --visualize
 python train.py --dataset_name 10P_16 --model_name VT_10P_16_emht2 --model_type VT -b 8 --visualize
+
+# 10P features test
+python generate_dataset.py -f data/10P -n dataset/10P_Q --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q
+python generate_dataset.py -f data/10P -n dataset/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2
+python generate_dataset.py -f data/10P -n dataset/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2 ANC
+
+# 10P_ANC
+python generate_dataset.py -f data/10P -n dataset/10P_ANC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features ANC
+python generate_dataset.py -f data/10P -n dataset/action/10P_ANC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features ANC
+python train.py --dataset_name 10P_ANC --model_name MLP_10P_ANC --model_type MLP -b 8 --visualize
+python train.py --dataset_name 10P_ANC --model_name CNN_10P_ANC --model_type CNN -b 8 --visualize
+python train.py --dataset_name 10P_ANC --model_name VT_10P_ANC_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 10P_ANC --model_name VT_10P_ANC_emht2 --model_type VT -b 8 --visualize
+
+# 10P_Q
+python generate_dataset.py -f data/10P -n dataset/10P_Q --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q
+python generate_dataset.py -f data/10P -n dataset/action/10P_Q --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features Q
+python train.py --dataset_name 10P_Q --model_name MLP_10P_Q --model_type MLP -b 8 --visualize
+python train.py --dataset_name 10P_Q --model_name CNN_10P_Q --model_type CNN -b 8 --visualize
+python train.py --dataset_name 10P_Q --model_name VT_10P_Q_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 10P_Q --model_name VT_10P_Q_emht2 --model_type VT -b 8 --visualize

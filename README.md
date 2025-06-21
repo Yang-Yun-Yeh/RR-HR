@@ -23,15 +23,24 @@ python visualize_data.py
 ### Step.1 Generate training, test set:
 ```
 # 2-D Spectrogram (dataset:10P_16)
-python generate_dataset.py -f data/10P -n dataset/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --sp_num 16
-python generate_dataset.py -f data/10P -n dataset/action/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --sp_num 16
+python generate_dataset.py -f data/10P -n dataset/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2
+python generate_dataset.py -f data/10P -n dataset/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features Q omega omega_l2
 ```
 ```
 # 2-D Spectrogram-action (dataset:10P_32)
-python generate_dataset.py -f data/10P -n dataset/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --sp_num 32
-python generate_dataset.py -f data/10P -n dataset/action/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --sp_num 32
+python generate_dataset.py -f data/10P -n dataset/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2 ANC
+python generate_dataset.py -f data/10P -n dataset/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features Q omega omega_l2 ANC
 ```
-
+```
+# 2-D Spectrogram-action (dataset:10P_ANC)
+python generate_dataset.py -f data/10P -n dataset/10P_ANC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features ANC
+python generate_dataset.py -f data/10P -n dataset/action/10P_ANC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features ANC
+```
+```
+# 2-D Spectrogram-action (dataset:10P_Q)
+python generate_dataset.py -f data/10P -n dataset/10P_Q --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q
+python generate_dataset.py -f data/10P -n dataset/action/10P_Q --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features Q
+```
 
 ### Step.2 Train model:
 ```
@@ -42,6 +51,16 @@ python train.py --dataset_name 10P_16 --model_name VT_10P_16_emt2 --model_type V
 # 2-D Spectrogram (dataset:10P_32)
 # ViT
 python train.py --dataset_name 10P_32 --model_name VT_10P_32_emt2 --model_type VT -b 8 --visualize
+```
+```
+# 2-D Spectrogram (dataset:10P_ANC)
+# ViT
+python train.py --dataset_name 10P_ANC --model_name VT_10P_ANC_emt2 --model_type VT -b 8 --visualize
+```
+```
+# 2-D Spectrogram (dataset:10P_Q)
+# ViT
+python train.py --dataset_name 10P_Q --model_name VT_10P_Q_emt2 --model_type VT -b 8 --visualize
 ```
 
 ### Step.3 Test model:

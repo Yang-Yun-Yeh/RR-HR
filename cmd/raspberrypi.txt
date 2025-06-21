@@ -11,8 +11,8 @@ port:22
 # RealVNC Viewer (遠端控制樹梅pi)
 cd code #切換到code目錄
 python imu_dryrun.py #測試IMU封包
-python record.py -f csv/6_07 -p test -a test --start 0 --still 0 --vs #測試錄資料
-python record.py -f csv/6_07 -p m6 -a run --start 100 --still 300 --vs #正式錄資料
+python record.py -f csv/6_21 -p test -a test --start 0 --still 0 --vs #測試錄資料
+python record.py -f csv/6_21 -p m7 -a run --start 100 --still 300 --vs #正式錄資料
 
 # 找樹梅pi的IP(在電腦本機跑)
 ping -4 raspberrypi
@@ -30,4 +30,6 @@ m2:陳威宇
 m3:林俊霆
 m4:張開
 m5:吳克洋
+m6:吳嘉泰
+m7:
 w1:張芳瑜
