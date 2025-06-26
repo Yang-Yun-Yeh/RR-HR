@@ -24,12 +24,12 @@ python visualize_data.py
 ```
 # 2-D Spectrogram (dataset:10P_16)
 python generate_dataset.py -f data/10P -n dataset/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2
-python generate_dataset.py -f data/10P -n dataset/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features Q omega omega_l2
+python generate_dataset.py -f data/10P -n dataset/action/10P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features Q omega omega_l2
 ```
 ```
 # 2-D Spectrogram-action (dataset:10P_32)
 python generate_dataset.py -f data/10P -n dataset/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2 ANC
-python generate_dataset.py -f data/10P -n dataset/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features Q omega omega_l2 ANC
+python generate_dataset.py -f data/10P -n dataset/action/10P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --action --features Q omega omega_l2 ANC
 ```
 ```
 # 2-D Spectrogram-action (dataset:10P_ANC)
