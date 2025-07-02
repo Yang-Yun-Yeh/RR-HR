@@ -24,3 +24,9 @@ plt.ylabel('Bone length (mm)')
 plt.legend()
 plt.tight_layout()
 plt.show()
+
+# input
+mae_ml = {'model_name':['MLP', 'CNN', 'ViT'],
+          'Q':[2.336, 2.589, 2.290],
+          'ANC':[2.485, 2.727, 2.085]}
+mae_paper = {'paper_4':4.4778, 'paper_5':6.888}
