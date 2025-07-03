@@ -389,8 +389,8 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64, start_t=0, return_t=F
             #     print(f"clarity: {clarity}, gt:{pitch * 60}")
             #     vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
 
-            print(f"clarity: {clarity}, gt:{pitch * 60}")
-            vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
+            # print(f"clarity: {clarity}, gt:{pitch * 60}")
+            # vs.draw_acf(acf, lag, frame_segment, acf_filtered=acf_filtered)
 
             # print(has_draw[0])
             # print(i)

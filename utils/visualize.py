@@ -852,6 +852,50 @@ def draw_learning_results_action_relative(relative_mae, sigma_num=1, models_name
  
     plt.show()
 
+def plot_mae_comparison(mae_ml, mae_paper):
+    model_names = mae_ml['model_name']
+    features = [key for key in mae_ml if key != 'model_name']
+    
+    num_models = len(model_names)
+    num_features = len(features)
+    
+    x_labels = features + list(mae_paper.keys())
+    x = np.arange(len(x_labels))
+    total_bar_width = 0.8
+    bar_width = total_bar_width / num_models
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+
+    # Color
+    colors = ["#418aff", "#ff6060", "#ffcd76", "#44ff70"]  # MLP, CNN, ViT_emt2, ViT_emht2
+    paper_colors = ["#a386ff", "#ff8fff"]      # paper_4, paper_5
+
+    # Model result
+    for i, model in enumerate(model_names):
+        values = [mae_ml[feat][i] for feat in features]
+        bar_positions = x[:num_features] + i * bar_width - total_bar_width / 2 + bar_width / 2
+        bars = ax.bar(bar_positions, values, width=bar_width, color=colors[i], label=model)
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2, height + 0.05,
+                    f'{height:.4f}', ha='center', va='bottom', fontsize=9)
+
+    # Paper result
+    for i, (paper, value) in enumerate(mae_paper.items()):
+        pos = x[num_features + i]
+        bar = ax.bar(pos, value, width=bar_width * 1.5, color=paper_colors[i], label=paper)
+        ax.text(pos, value + 0.05, f'{value:.4f}', ha='center', va='bottom', fontsize=9)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(x_labels)
+    ax.set_xlabel("Features / Papers")
+    ax.set_ylabel("MAE (1/min)")
+    ax.set_title("L1 Loss (MAE) Comparison")
+    ax.legend(title="Models / Papers")
+    ax.grid(axis='y', linestyle='--', alpha=0.5)
+    plt.tight_layout()
+    plt.show()
+
 
 if __name__ == '__main__':
     file_path = "./data_test/sit_4.csv"
