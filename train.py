@@ -28,7 +28,7 @@ def parse_args():
     
     # Training
     parser.add_argument("-b", "--batch_size", type=int, default=4)
-    parser.add_argument("-n", "--num_epoch", type=int, default=100)
+    parser.add_argument("-n", "--num_epoch", type=int, default=50)
     parser.add_argument("--visualize", action='store_true')
 
     args = parser.parse_args()

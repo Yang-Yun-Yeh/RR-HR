@@ -167,3 +167,11 @@ python train.py --dataset_name 10P_V --model_name MLP_10P_V --model_type MLP -b 
 python train.py --dataset_name 10P_V --model_name CNN_10P_V --model_type CNN -b 8 --visualize
 python train.py --dataset_name 10P_V --model_name VT_10P_V_emt2 --model_type VT -b 8 --visualize
 python train.py --dataset_name 10P_V --model_name VT_10P_V_emht2 --model_type VT -b 8 --visualize
+
+# 17P_32
+python generate_dataset.py -f data/17P -n dataset/17P_Q --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q
+python generate_dataset.py -f data/17P -n dataset/action/17P_Q --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --features Q
+python train.py --dataset_name 17P_Q --model_name MLP_17P_Q --model_type MLP -b 8 --visualize
+python train.py --dataset_name 17P_Q --model_name CNN_17P_Q --model_type CNN -b 8 --visualize
+python train.py --dataset_name 17P_Q --model_name VT_17P_Q_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 17P_Q --model_name VT_17P_Q_emht2 --model_type VT -b 8 --visualize

@@ -11,26 +11,14 @@ port:22
 # RealVNC Viewer (遠端控制樹梅pi)
 cd code #切換到code目錄
 python imu_dryrun.py #測試IMU封包
-python record.py -f csv/6_24 -p test -a test --start 0 --still 0 --vs #測試錄資料
-python record.py -f csv/6_24 -p w2 -a run --start 100 --still 300 --vs #正式錄資料
+python record.py -f csv/7_02 -p test -a test --start 0 --still 0 --vs #測試錄資料
+python record.py -f csv/7_02 -p w5 -a run --start 100 --still 300 --vs #正式錄資料
 
 # 找樹梅pi的IP(在電腦本機跑)
 ping -4 raspberrypi
 
+192.168.81.6
+
 ps.
 ● If錄資料時沒有資料進來 -> 重開樹梅pi的電源(斷電10秒以上)
 ● 電池盒的電池大約可以撐2~3小時，沒電可以用袋子裡的充電器充電
-
-Dataset:
-葉揚昀
-吳奕萱
-Sudhanv(工程師)
-m1:王崇喆
-m2:陳威宇
-m3:林俊霆
-m4:張開
-m5:吳克洋
-m6:吳嘉泰
-m7:李宗霖
-w1:張芳瑜
-w2:

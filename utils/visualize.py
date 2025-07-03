@@ -3,7 +3,7 @@ from matplotlib.lines import Line2D
 import pandas as pd
 import numpy as np
 
-def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y', 'q_z', 'q_w'], overlap=False, show_gt=False):
+def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y', 'q_z', 'q_w'], overlap=False, overlap_only=False, show_gt=False):
     # titles = ['$q_x$', '$q_y$', '$q_z$', '$q_w$']
     titles = []
     for i in range(len(cols)):
@@ -28,31 +28,42 @@ def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y',
     
     row_num += 1
     # fig, axes = plt.subplots(row_num, len(titles), figsize=(20,10), constrained_layout=True)
+    if overlap_only:
+        row_num = 1
+
     fig = plt.figure(figsize=(15, 3 * row_num), layout="constrained")
     spec = fig.add_gridspec(row_num, len(titles))
     ax_ls = []
-    for k, key in enumerate(sensor_names):
-        if key not in sensor_names:
-            continue
-        for i in range(len(titles)):
-            # print(f'{i}, {key}, {cols[i]}')
-            # axes[k][i%4].plot(time_ls, imu_data[key + "_" + cols[i]], color=colors[k])
-            # axes[k][i%4].set_title(titles[i])
 
-            ax = fig.add_subplot(spec[k, i%4])
-            ax.plot(time_ls, imu_data[key + "_" + cols[i]], color=colors[k])
-            ax.set_title(titles[i])
+    if not overlap_only:
+        for k, key in enumerate(sensor_names):
+            if key not in sensor_names:
+                continue
+            for i in range(len(titles)):
+                # print(f'{i}, {key}, {cols[i]}')
+                # axes[k][i%4].plot(time_ls, imu_data[key + "_" + cols[i]], color=colors[k])
+                # axes[k][i%4].set_title(titles[i])
 
-        legend_handle_ls.append(Line2D([0], [0], label=key, color=colors[k]))
+                ax = fig.add_subplot(spec[k, i%4])
+                ax.plot(time_ls, imu_data[key + "_" + cols[i]], color=colors[k])
+                ax.set_title(titles[i])
+
+            legend_handle_ls.append(Line2D([0], [0], label=key, color=colors[k]))
 
     if overlap:
         for i in range(len(titles)):
-            ax = fig.add_subplot(spec[2, i%4])
+            if overlap_only:
+                ax = fig.add_subplot(spec[0, i%4])
+            else:
+                ax = fig.add_subplot(spec[2, i%4])
             for k, key in enumerate(sensor_names):
                 ax.plot(time_ls, imu_data[key + "_" + cols[i]], color=colors[k])
             ax.set_title(titles[i])
+    if overlap_only:
+        for k, key in enumerate(sensor_names):
+            legend_handle_ls.append(Line2D([0], [0], label=key, color=colors[k]))
 
-    if show_gt:
+    if show_gt and not overlap_only:
         if not overlap:
             ax = fig.add_subplot(spec[2, :])
         else:
@@ -65,6 +76,7 @@ def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y',
     # ax.plot(time_ls, imu_data["imu2_q_y"], color=colors[1])
     # ax.set_title('imu2_q_y')
     
+    fig.supxlabel('seconds')
     fig.legend(handles=legend_handle_ls, loc="upper right")
     
     # plt.savefig('output/figures/a.png')
@@ -176,7 +188,6 @@ def draw_anc_curve_multi(imu_data, outputs, sensor_names=['imu1','imu2'], cols =
         ax.set_title('Respiration GT Force')
         legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))
                 
-
     fig.legend(handles=legend_handle_ls, loc="upper right")
 
     plt.show()
@@ -260,7 +271,7 @@ def draw_imu_curve_euler(imu_data, euler_angles, sensor_names=['imu1','imu2'], o
         ax.plot(time_ls, imu_data["Force"], color=colors[2])
         ax.set_title('Respiration GT Force')
         legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))
-            
+    
     fig.legend(handles=legend_handle_ls, loc="upper right")
     
     plt.show()
@@ -700,8 +711,9 @@ def draw_acf(acf, lag, frame_segment, fs=10, acf_filtered=None):
 
     # Plot on the first subplot
     ax[0].plot(time / fs, frame_segment, label='force', color=colors[1])
-    ax[0].set_title('RR Force')
-    ax[0].set_ylabel('rr force')
+    ax[0].set_title('RR force in running activity')
+    ax[0].set_xlabel('second')
+    ax[0].set_ylabel('RR force')
     ax[0].legend()
     ax[0].grid(True)
 
@@ -712,9 +724,9 @@ def draw_acf(acf, lag, frame_segment, fs=10, acf_filtered=None):
         ax[1].plot(time[lag], acf_filtered[lag], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="red")
     else:
         ax[1].plot(time[lag], acf[lag], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="red")
-    ax[1].set_title('ACF')
+    ax[1].set_title('ACF of RR force')
     ax[1].set_xlabel('index')
-    ax[1].set_ylabel('acf')
+    ax[1].set_ylabel('ACF')
     ax[1].legend()
     ax[1].grid(True)
 
@@ -838,6 +850,50 @@ def draw_learning_results_action_relative(relative_mae, sigma_num=1, models_name
         ax.set_yticks(np.arange(0, y_axis_upper + 10, 10))
         # ax.set_xlim(0, len(x))
  
+    plt.show()
+
+def plot_mae_comparison(mae_ml, mae_paper):
+    model_names = mae_ml['model_name']
+    features = [key for key in mae_ml if key != 'model_name']
+    
+    num_models = len(model_names)
+    num_features = len(features)
+    
+    x_labels = features + list(mae_paper.keys())
+    x = np.arange(len(x_labels))
+    total_bar_width = 0.8
+    bar_width = total_bar_width / num_models
+
+    fig, ax = plt.subplots(figsize=(16, 6))
+
+    # Color
+    colors = ["#418aff", "#ff6060", "#ffcd76", "#44ff70"]  # MLP, CNN, ViT_emt2, ViT_emht2
+    paper_colors = ["#a386ff", "#ff8fff"]      # paper_4, paper_5
+
+    # Model result
+    for i, model in enumerate(model_names):
+        values = [mae_ml[feat][i] for feat in features]
+        bar_positions = x[:num_features] + i * bar_width - total_bar_width / 2 + bar_width / 2
+        bars = ax.bar(bar_positions, values, width=bar_width, color=colors[i], label=model)
+        for bar in bars:
+            height = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width()/2, height + 0.05,
+                    f'{height:.4f}', ha='center', va='bottom', fontsize=9)
+
+    # Paper result
+    for i, (paper, value) in enumerate(mae_paper.items()):
+        pos = x[num_features + i]
+        bar = ax.bar(pos, value, width=bar_width * 1.5, color=paper_colors[i], label=paper)
+        ax.text(pos, value + 0.05, f'{value:.4f}', ha='center', va='bottom', fontsize=9)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(x_labels)
+    ax.set_xlabel("Features / Papers")
+    ax.set_ylabel("MAE (1/min)")
+    ax.set_title("L1 Loss (MAE) Comparison")
+    ax.legend(title="Models / Papers")
+    ax.grid(axis='y', linestyle='--', alpha=0.5)
+    plt.tight_layout()
     plt.show()
 
 
