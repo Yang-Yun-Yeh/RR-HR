@@ -158,7 +158,7 @@ def q_to_omega(q, fs=10):
 def omega_to_AngSpeed(omega):
     return np.linalg.norm(omega, axis=1)
 
-def anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995):
+def anc_process(data_anc, NTAPS=3, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995):
     # Init
     outputs_dict_LMS = FIRF.LMS(data_anc, NTAPS, LEARNING_RATE)
     outputs_dict_LMSLS = FIRF.LMSLS(data_anc, NTAPS, LEARNING_RATE)

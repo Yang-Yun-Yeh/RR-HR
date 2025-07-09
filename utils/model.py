@@ -189,7 +189,7 @@ class CNN_out1_2(nn.Module):
         self.fc = nn.Linear(256, 1)
 
     def forward(self, x):
-        # Input shape: (batch_size, 16, freq_bins, time_steps)
+        # Input shape: (batch_size, num_channels, freq_bins, time_steps)
         x = self.features(x)               # → (batch_size, 256, 1, 1)
         x = x.view(x.size(0), -1)          # → (batch_size, 256)
         x = self.fc(x)                     # → (batch_size, 1)
@@ -372,6 +372,7 @@ def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', 
     
     # Optimizer
     optimizer = optim.Adam(model.parameters(), lr=0.003)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.7, patience=5) # lr decay
 
     # model.train()
     for epoch in range(num_epochs):
@@ -402,10 +403,12 @@ def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', 
                 total_mse_loss_train += mse_loss.item()
                 total_l1_loss_train += l1_loss.item()
 
-        avg_mse_loss_train = total_mse_loss_train / len(train_loader)
+        avg_mse_loss_train = (60**2) * total_mse_loss_train / len(train_loader)
         avg_l1_loss_train = 60 * total_l1_loss_train / len(train_loader) # 1/min
         mse_train_ls.append(avg_mse_loss_train)
         l1_train_ls.append(avg_l1_loss_train)
+
+        scheduler.step(l1_loss)
 
         # eval
         model.eval()
@@ -428,7 +431,7 @@ def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', 
                     total_l1_loss_test += l1_loss.item()
 
         # Compute average loss over all batches
-        avg_mse_loss_test = total_mse_loss_test / len(test_loader)
+        avg_mse_loss_test = (60**2) * total_mse_loss_test / len(test_loader)
         avg_l1_loss_test = 60 * total_l1_loss_test / len(test_loader)
         mse_test_ls.append(avg_mse_loss_test)
         l1_test_ls.append(avg_l1_loss_test)

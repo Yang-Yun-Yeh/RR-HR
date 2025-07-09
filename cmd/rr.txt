@@ -21,6 +21,12 @@ command:
 # ANC
 python ANC_action.py -f data/8P --window_size 256 --stride 64
 
+#order
+python test_order.py -m 20 --visualize --dataset_name 17P
+python test_order.py -m 20 --visualize --dataset_name order
+python test_order.py -m 50 --visualize
+
+# hamham
 python generate_dataset.py -f data/hamham -n dataset/hamham
 python train.py --dataset_name hamham --model_name MLP_1D --visualize
 python test.py --dataset_name hamham --model_name MLP_1D --model_type MLP
@@ -168,10 +174,54 @@ python train.py --dataset_name 10P_V --model_name CNN_10P_V --model_type CNN -b 
 python train.py --dataset_name 10P_V --model_name VT_10P_V_emt2 --model_type VT -b 8 --visualize
 python train.py --dataset_name 10P_V --model_name VT_10P_V_emht2 --model_type VT -b 8 --visualize
 
-# 17P_32
+# 17P_Q
 python generate_dataset.py -f data/17P -n dataset/17P_Q --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q
 python generate_dataset.py -f data/17P -n dataset/action/17P_Q --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --features Q
 python train.py --dataset_name 17P_Q --model_name MLP_17P_Q --model_type MLP -b 8 --visualize
 python train.py --dataset_name 17P_Q --model_name CNN_17P_Q --model_type CNN -b 8 --visualize
 python train.py --dataset_name 17P_Q --model_name VT_17P_Q_emt2 --model_type VT -b 8 --visualize
 python train.py --dataset_name 17P_Q --model_name VT_17P_Q_emht2 --model_type VT -b 8 --visualize
+
+python train.py --dataset_name 17P_Q --model_name VT_17P_Q_emt2_decay --model_type VT -b 8 --visualize
+
+# 17P_16
+python generate_dataset.py -f data/17P -n dataset/17P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2
+python generate_dataset.py -f data/17P -n dataset/action/17P_16 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --features Q omega omega_l2
+python train.py --dataset_name 17P_16 --model_name MLP_17P_16 --model_type MLP -b 8 --visualize
+python train.py --dataset_name 17P_16 --model_name CNN_17P_16 --model_type CNN -b 8 --visualize
+python train.py --dataset_name 17P_16 --model_name VT_17P_16_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 17P_16 --model_name VT_17P_16_emht2 --model_type VT -b 8 --visualize
+
+python train.py --dataset_name 17P_16 --model_name VT_17P_16_emt22_decay --model_type VT -b 8 --visualize
+
+
+# 17P_32
+python generate_dataset.py -f data/17P -n dataset/17P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2 ANC
+python generate_dataset.py -f data/17P -n dataset/action/17P_32 --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --features Q omega omega_l2 ANC
+python train.py --dataset_name 17P_32 --model_name MLP_17P_32 --model_type MLP -b 8 --visualize
+python train.py --dataset_name 17P_32 --model_name CNN_17P_32 --model_type CNN -b 8 --visualize
+python train.py --dataset_name 17P_32 --model_name VT_17P_32_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 17P_32 --model_name VT_17P_32_emht2 --model_type VT -b 8 --visualize
+
+python train.py --dataset_name 17P_32 --model_name VT_17P_32_e4mh2 --model_type VT -b 16 --visualize
+python train.py --dataset_name 17P_32 --model_name VT_17P_32_emht2_16b --model_type VT -b 16 --visualize
+python train.py --dataset_name 17P_32 --model_name VT_17P_32_em4h2_16b --model_type VT -b 16 --visualize
+
+python train.py --dataset_name 17P_32 --model_name VT_17P_32_emhl2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 17P_32 --model_name VT_17P_32_emhl2_decay --model_type VT -b 8 --visualize
+
+# 17P_ANC
+python generate_dataset.py -f data/17P -n dataset/17P_ANC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features ANC
+python generate_dataset.py -f data/17P -n dataset/action/17P_ANC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --features ANC
+python train.py --dataset_name 17P_ANC --model_name MLP_17P_ANC --model_type MLP -b 8 --visualize
+python train.py --dataset_name 17P_ANC --model_name CNN_17P_ANC --model_type CNN -b 8 --visualize
+python train.py --dataset_name 17P_ANC --model_name VT_17P_ANC_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 17P_ANC --model_name VT_17P_ANC_emht2 --model_type VT -b 8 --visualize
+
+# 17P_Q+ANC
+python generate_dataset.py -f data/17P -n dataset/17P_Q+ANC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q ANC
+python generate_dataset.py -f data/17P -n dataset/action/17P_Q+ANC --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --action --byCol --features Q ANC
+python train.py --dataset_name 17P_Q+ANC --model_name MLP_17P_Q+ANC --model_type MLP -b 8 --visualize
+python train.py --dataset_name 17P_Q+ANC --model_name CNN_17P_Q+ANC --model_type CNN -b 8 --visualize
+python train.py --dataset_name 17P_Q+ANC --model_name VT_17P_Q+ANC_emt2 --model_type VT -b 8 --visualize
+python train.py --dataset_name 17P_Q+ANC --model_name VT_17P_Q+ANC_emht2 --model_type VT -b 8 --visualize
