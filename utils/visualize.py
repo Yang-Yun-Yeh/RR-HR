@@ -26,7 +26,7 @@ def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y',
         else:
             row_num += 2
     
-    row_num += 1
+    # row_num += 1
     # fig, axes = plt.subplots(row_num, len(titles), figsize=(20,10), constrained_layout=True)
     if overlap_only:
         row_num = 1
@@ -70,6 +70,7 @@ def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y',
             ax = fig.add_subplot(spec[3, :])
         ax.plot(time_ls, imu_data["Force"], color=colors[2])
         ax.set_title('Respiration GT Force')
+        ax.set_ylabel('N')
         legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))        
 
     # ax = fig.add_subplot(spec[4, :])
@@ -696,15 +697,6 @@ def draw_acf(acf, lag, frame_segment, fs=10, acf_filtered=None):
     colors = ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'orange']
  
     time = np.arange(len(acf))
-    # plt.plot(time, acf, marker='o', linestyle='-', color=colors[0], label="acf")
-    # plt.plot(time[lag], acf[lag], marker="o", markersize=10, markeredgecolor="red", markerfacecolor="red")
-
-    # plt.xlabel("index")
-    # plt.ylabel("acf")
-    # plt.title("ACF")
-    # plt.legend()
-    # plt.grid()
-    # plt.show()
 
     # Create a figure with 2 rows and 1 column of subplots
     fig, ax = plt.subplots(2, 1, figsize=(10, 6))
@@ -896,6 +888,111 @@ def plot_mae_comparison(mae_ml, mae_paper):
     plt.tight_layout()
     plt.show()
 
+def draw_order_RMSE(train_rmse_ls, val_rmse_ls):
+    # X-axis values (Orders)
+    M = len(train_rmse_ls)
+    orders = np.arange(1, M+1)
+
+    # Coordinates for the highlighted circle
+    highlight_order = np.argmin(val_rmse_ls) + 1
+    highlight_rmse = val_rmse_ls[np.where(orders == highlight_order)[0][0]]
+
+    # # --- Plotting ---
+    # # Create the figure and axes
+    # plt.figure(figsize=(12, 4))
+    # ax = plt.gca()
+
+    # # Plot Training and Validation RMSE
+    # ax.plot(orders, train_rmse_ls, marker='.', linestyle='-', label='Training RMSE')
+    # ax.plot(orders, val_rmse_ls, marker='.', linestyle='-', label='Validation RMSE')
+
+    # # Add the red circle highlight
+    # ax.plot(highlight_order, highlight_rmse, marker='o', markersize=12,
+    #         fillstyle='none', markeredgecolor='red', markeredgewidth=1.0)
+
+    # # Set titles and labels
+    # ax.set_title('RMSE vs. orders for system ID')
+    # ax.set_ylabel('RMSE')
+    # # The x-axis label is not in the original image, but it is good practice to include it.
+    # ax.set_xlabel('Orders')
+
+
+    # # Set axis limits and ticks
+    # ax.set_xlim(0, M+1)
+    # ax.set_xticks(np.arange(0, M+1, 1))
+
+    # # Add legend and grid
+    # ax.legend(loc="upper right")
+    # ax.grid(True, which='both', linestyle='-', linewidth=0.5, color='lightgray')
+
+    # # Display the plot
+    # plt.show()
+
+
+    # Create a figure with 2 rows and 1 column of subplots
+    colors = ["#418aff", "#ff6060", "#ffcd76", "#44ff70"]
+    row_num = 2
+    fig, ax = plt.subplots(row_num, 1, figsize=(12, 6))
+
+    for i in range(row_num):
+        if i == 0:
+            ax[i].plot(orders, train_rmse_ls, marker='.', linestyle='-', label='Training RMSE', color=colors[i])
+        elif i == 1:
+            ax[i].plot(orders, val_rmse_ls, marker='.', linestyle='-', label='Validation RMSE', color=colors[i])
+            ax[i].plot(highlight_order, highlight_rmse, marker='o', markersize=12,
+            fillstyle='none', markeredgecolor='red', markeredgewidth=1.0)
+        
+        ax[i].set_title('RMSE vs. orders of FIR filter')
+        ax[i].set_ylabel('RMSE')
+        ax[i].set_xlabel('Orders')
+
+        ax[i].set_xlim(0, M+1)
+        ax[i].set_xticks(np.arange(0, M+1, 2))
+        ax[i].legend(loc="upper right")
+        ax[i].grid(True, which='both', linestyle='-', linewidth=0.5, color='lightgray')
+
+    plt.tight_layout()
+    plt.show()
+
+def draw_order_action(m_best_action, M):
+    c = "#418aff"
+
+    col_num = 2
+    row_num = 2
+    fig = plt.figure(figsize=(5*col_num, 3*row_num), layout="constrained")
+    spec = fig.add_gridspec(row_num, col_num)
+    y_axis_upper = 15
+    delta_y = 2
+
+    action_ls = m_best_action.keys()
+    x = np.arange(0.5, M+1+0.5, 1)
+    # print(x)
+    
+    # Draw bar plot
+    for i, action in enumerate(action_ls):
+        ax = fig.add_subplot(spec[i // col_num , i % col_num])
+
+        counts, bin_edges, _ = ax.hist(m_best_action[action], bins=x, color=c, edgecolor='black')
+        # print(f'{action}: {counts}')
+        # max_frequency = np.max(counts)
+        # max_freq_index = np.argmax(counts)
+        # x_value_at_max_freq = bin_edges[max_freq_index]
+
+        y_axis_upper = np.max(counts)    
+
+        ax.set_title(f'{action}, median of order: {np.median(m_best_action[action])}')
+        ax.set_xlabel('order of impulse response')
+        ax.set_ylabel('number')
+
+        ax.yaxis.grid(True)
+        ax.set_xlim(0, M+1)
+        ax.set_xticks(np.arange(0, M+1, 2))
+        
+        ax.set_ylim(0, y_axis_upper)
+        ax.set_yticks(np.arange(0, y_axis_upper+1, 2))
+
+    plt.tight_layout()
+    plt.show()
 
 if __name__ == '__main__':
     file_path = "./data_test/sit_4.csv"

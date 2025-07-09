@@ -96,7 +96,7 @@ def prepare_data(dir, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_p
 
             # calculate ANC features
             if 'ANC' in features:
-                anc_outputs = sp.anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
+                anc_outputs = sp.anc_process(data_anc, NTAPS=3, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
                 for anc_output in anc_outputs:
                     method = anc_output['method']
                     for col in cols:
@@ -233,7 +233,7 @@ def prepare_file(file, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_
 
     # calculate ANC features
     if 'ANC' in features:
-        anc_outputs = sp.anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
+        anc_outputs = sp.anc_process(data_anc, NTAPS=3, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
         for anc_output in anc_outputs:
             method = anc_output['method']
             for col in cols:
@@ -380,7 +380,7 @@ def prepare_action_data(dir, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], 
 
             # calculate ANC features
             if 'ANC' in features:
-                anc_outputs = sp.anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
+                anc_outputs = sp.anc_process(data_anc, NTAPS=3, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
                 for anc_output in anc_outputs:
                     method = anc_output['method']
                     for col in cols:
@@ -497,7 +497,7 @@ def prepare_data_anc(dir, fs=10, start_pt=0, end_pt=-1, still_pt=300, after_stil
             data_anc = data_aligned.copy() # data used in sml
             data_anc = data_anc[still_pt+after_still_pt:]
 
-            outputs = sp.anc_process(data_anc, NTAPS=5, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
+            outputs = sp.anc_process(data_anc, NTAPS=3, LEARNING_RATE=0.001, delta=1, lam_rls=0.9995, epsilon=1e-6, lam_lrls=0.9995)
             # print(f"outputs:{outputs}")
             pred, gt, mae = sp.auto_correlation(
                 data_anc,

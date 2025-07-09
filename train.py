@@ -28,7 +28,7 @@ def parse_args():
     
     # Training
     parser.add_argument("-b", "--batch_size", type=int, default=4)
-    parser.add_argument("-n", "--num_epoch", type=int, default=50)
+    parser.add_argument("-n", "--num_epoch", type=int, default=60)
     parser.add_argument("--visualize", action='store_true')
 
     args = parser.parse_args()
@@ -75,7 +75,8 @@ if __name__ == '__main__':
     elif args.model_type == "VT":
         # model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, device=device) # patch_size=(h, w)=(3, 3)
         model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, num_heads=8, device=device) # patch_size=(h, w)=(3, 3)
-
+        
+        # model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, num_heads=8, num_layers=8,device=device)
     # Train the model
     now = datetime.now()
     if args.model_name == "model":

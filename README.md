@@ -5,7 +5,7 @@
 
 ## Data collecting
 - Use raspberry pi, IMUs, and RR band.
-- Run `IoT/daq.py` file to start record data (`code/daq.py` in raspberry pi directory).
+- Run `IoT/record.py` file to start record data (`code/record.py` in raspberry pi directory).
 - Output file will store in `code/csv/.` in raspberry pi directory.
 
 ## Visualization
@@ -15,7 +15,11 @@ python visualize_data.py
 ```
 
 ## ANC (FIR filter)
-- Use whole_process.ipynb
+- Use ANC_action.ipynb # previous: whole_process.ipynb
+- Find order:
+```
+ python test_order.py -m 20 --visualize --dataset_name 17P
+ ```
 
 ## Spectrogram + Learning base
 - Use learning_base_16.ipynb or run below (all arguments can be modified):
