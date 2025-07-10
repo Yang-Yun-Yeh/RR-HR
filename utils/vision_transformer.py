@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import pickle
 import math
 
 class PatchEmbedding(nn.Module):
@@ -40,12 +41,18 @@ class TransformerEncoderBlock(nn.Module):
 
 
 class ViTRegression(nn.Module):
-    def __init__(self, in_channels=16, patch_size=(4, 4), emb_dim=128, num_heads=4, mlp_dim=256, num_layers=4, dropout=0.1, device="cuda"):
+    def __init__(self, in_channels=16, patch_size=(4, 4), emb_dim=128, num_heads=4, mlp_dim=256, num_layers=4, dropout=0.1, device="cuda", load=False, model_name=None):
         super(ViTRegression, self).__init__()
         self.patch_embed = PatchEmbedding(in_channels, patch_size, emb_dim)
-        
         self.cls_token = nn.Parameter(torch.zeros(1, 1, emb_dim))
-        self.pos_embedding = None  # Will be created dynamically in forward()
+
+        self.load = load
+        self.model_name = model_name
+        if load: # load pos_embedding
+            with open(f'./models/ViT position emb/{model_name}.pkl', 'rb') as file:
+                self.pos_embedding = pickle.load(file)
+        else:
+            self.pos_embedding = None  # Will be created dynamically in forward()
 
         self.encoder_layers = nn.ModuleList([
             TransformerEncoderBlock(emb_dim, num_heads, mlp_dim, dropout)
@@ -62,15 +69,23 @@ class ViTRegression(nn.Module):
         x = self.patch_embed(x)  # (batch_size, num_patches, emb_dim)
         B, N, D = x.shape
 
+        # print(f'x.shape:{x.shape}')
+
         # Append CLS token
         cls_tokens = self.cls_token.expand(B, 1, D)
         x = torch.cat((cls_tokens, x), dim=1)  # (batch_size, 1 + num_patches, emb_dim)
 
+        # print(f'x.shape:{x.shape}')
+        # print(f'x.shape[1]:{x.shape[1]}')
+        # exit()
+
         # Positional encoding
-        if self.pos_embedding is None or self.pos_embedding.shape[1] != x.shape[1]:
+        if self.pos_embedding is None or self.pos_embedding.shape[1] != x.shape[1] and not self.load:
             self.pos_embedding = nn.Parameter(torch.zeros(1, x.shape[1], D)).to(self.device)
             nn.init.trunc_normal_(self.pos_embedding, std=0.02)
-            # self.pos_embedding = self.pos_embedding.to(self.device)
+        
+            with open(f'./models/ViT position emb/{self.model_name}.pkl', 'wb') as file: # save pos_embedding
+                pickle.dump(self.pos_embedding, file)
 
         # print(f'x.type:{x.type}')
         # print(f'self.pos_embedding.type:{self.pos_embedding.type}')

@@ -4,6 +4,8 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import r2_score
+import copy
+import pickle
 
 try:
      from . import visualize as vs
@@ -363,7 +365,9 @@ def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', 
     model.to(device)
 
     # Best loss
-    l1_test_best = float('inf')
+    # l1_test_best = float('inf')
+    l1_train_best = float('inf')
+    model_best = None
     
     # Loss functions
     criterion_mse = nn.MSELoss()  # Mean Squared Error (Regression Loss)
@@ -372,7 +376,7 @@ def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', 
     
     # Optimizer
     optimizer = optim.Adam(model.parameters(), lr=0.003)
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.7, patience=5) # lr decay
+    # scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=0.7, patience=5) # lr decay
 
     # model.train()
     for epoch in range(num_epochs):
@@ -408,7 +412,7 @@ def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', 
         mse_train_ls.append(avg_mse_loss_train)
         l1_train_ls.append(avg_l1_loss_train)
 
-        scheduler.step(l1_loss)
+        # scheduler.step(l1_loss)
 
         # eval
         model.eval()
@@ -437,12 +441,19 @@ def train_model(model, train_loader, test_loader, name=None, ckpt_dir='models', 
         l1_test_ls.append(avg_l1_loss_test)
 
         # Save model
-        if avg_l1_loss_test < l1_test_best:
-            l1_test_best = avg_l1_loss_test
-            torch.save(model.state_dict(), f'./{ckpt_dir}/{str(name)}.pt')
+        # if avg_l1_loss_test < l1_test_best:
+            # l1_test_best = avg_l1_loss_test
+        if avg_l1_loss_train < l1_train_best:
+            l1_train_best = avg_l1_loss_train
+            # torch.save(model.state_dict(), f'./{ckpt_dir}/{str(name)}.pt')
+            model_best = copy.deepcopy(model.state_dict())
             # print("Best model saved!")
         
+        # print(f"Epoch {epoch+1}/{num_epochs}, Train MSE: {avg_mse_loss_train:.4f}, L1: {avg_l1_loss_train:.4f}, Test MSE: {avg_mse_loss_test:.4f}, L1: {avg_l1_loss_test:.4f}, lr:{scheduler.get_last_lr()}")
         print(f"Epoch {epoch+1}/{num_epochs}, Train MSE: {avg_mse_loss_train:.4f}, L1: {avg_l1_loss_train:.4f}, Test MSE: {avg_mse_loss_test:.4f}, L1: {avg_l1_loss_test:.4f}")
+
+    # Save model
+    torch.save(model_best, f'./{ckpt_dir}/{str(name)}.pt')
 
     # draw results
     if visualize:
@@ -476,7 +487,7 @@ def evaluate_model(model, test_loader, model_name='model', device="cuda"):
             num_batches += 1
 
     # Compute average loss over all batches
-    avg_mse_loss = total_mse_loss / num_batches
+    avg_mse_loss = (60**2) * total_mse_loss / num_batches
     avg_l1_loss = 60 * total_l1_loss / num_batches
 
     print(f"{model_name} Evaluation Results - MSE Loss: {avg_mse_loss:.4f}, L1 Loss: {avg_l1_loss:.4f} 1/min")
