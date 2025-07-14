@@ -187,8 +187,10 @@ def draw_anc_curve_multi(imu_data, outputs, sensor_names=['imu1','imu2'], cols =
         ax = fig.add_subplot(spec[row, :])
         ax.plot(time_ls, imu_data["Force"], color=colors[2])
         ax.set_title('Respiration GT Force')
+        ax.set_ylabel('N')
         legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))
-                
+    
+    fig.supxlabel('seconds')
     fig.legend(handles=legend_handle_ls, loc="upper right")
 
     plt.show()
@@ -837,7 +839,7 @@ def draw_learning_results_action_relative(relative_mae, sigma_num=1, models_name
         if len(x) == 2:
             ax.set_xlim(x[0] - 1, x[-1] + 1)
         ax.yaxis.grid(True)
-        ax.set_ylabel('Relative MAE (%)')
+        ax.set_ylabel('MAPE (%)')
         ax.set_ylim(0, y_axis_upper)
         ax.set_yticks(np.arange(0, y_axis_upper + 10, 10))
         # ax.set_xlim(0, len(x))
