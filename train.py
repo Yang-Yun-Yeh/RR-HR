@@ -6,6 +6,7 @@ from datetime import datetime
 from utils.visualize import *
 from utils.signal_process import *
 from utils.model import *
+from utils.preprocess import *
 import utils.vision_transformer as VT
 
 import torch
@@ -20,7 +21,10 @@ def parse_args():
     parser.add_argument("--ckpt_dir", type=str, default="models", help="path to save checkpoints")
     parser.add_argument("--dataset_dir", type=str, default="dataset/", help="path to the dataset directory")
     parser.add_argument("--dataset_name", type=str, default="imu_dataset")
-    
+
+    # Dataset
+    parser.add_argument('--test', nargs='+', default=['m2', 'm5', 'm7', 'w1', 'w4'])
+    parser.add_argument('--features', nargs='+', default=['Q', 'omega', 'omega_l2', 'ANC'])
     
     # Model
     parser.add_argument("--model_name", type=str, default="model")
@@ -31,6 +35,7 @@ def parse_args():
     parser.add_argument("-n", "--num_epoch", type=int, default=50)
     parser.add_argument("--visualize", action='store_true')
 
+
     args = parser.parse_args()
     return args
 
@@ -38,12 +43,10 @@ if __name__ == '__main__':
     args = parse_args()
     os.makedirs(args.dataset_dir, exist_ok=True)
     os.makedirs(args.ckpt_dir, exist_ok=True)
-
+    
     # Load dataset
-    pkl_train = pickle.load(open(os.path.join(args.dataset_dir, f'{args.dataset_name}_train.pkl'), 'rb'))
-    pkl_test = pickle.load(open(os.path.join(args.dataset_dir, f'{args.dataset_name}_test.pkl'), 'rb'))
-    input_train, gt_train = pkl_train['input'], pkl_train['gt']
-    input_test, gt_test = pkl_test['input'], pkl_test['gt']
+    dataset = pickle.load(open(os.path.join(args.dataset_dir, f'{args.dataset_name}.pkl'), 'rb'))
+    input_train, gt_train, input_test, gt_test = split_dataset(dataset, test_set=args.test, features=args.features)
 
     print('Preparing data......')
     print(f'Training for {len(input_train)} windows, shape: {input_train.shape}')

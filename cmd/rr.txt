@@ -211,3 +211,9 @@ python train.py --dataset_name 17P_Q+ANC --model_name VT_17P_Q+ANC_emt2 --model_
 python train.py --dataset_name 17P_Q+ANC --model_name VT_17P_Q+ANC_emht2 --model_type VT -b 8 --visualize
 python train.py --dataset_name 17P_Q+ANC --model_name VT_17P_Q+ANC_s --model_type VT -b 8 --visualize
 
+# 17P
+python generate_dataset.py -f data/all -n dataset/17P --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2 ANC
+python train.py --dataset_name 17P --model_name test --model_type MLP -b 8 --visualize --features Q ANC --test m2 m5 m7 w1 w4
+python test.py --dataset_name 17P --model_name VT_17P_Q+ANC_s --model_type VT --features Q ANC --test m2 m5 m7 w1 w4
+
+python test.py --dataset_name 17P --model_name VT_17P_Q+ANC_s --model_type VT --features Q ANC --test m2 m5 m7 w1 w4

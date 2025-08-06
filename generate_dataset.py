@@ -38,47 +38,68 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    
-    dataset_types = ['train', 'test']
-    for tp in dataset_types:
-        target_folder = os.path.join(args.dataset_folder, tp)
-        print(f"target_folder: {target_folder}")
-        # files = os.listdir(target_folder)
-        
-        if not args.action:
-            spectrograms, gts = prepare_data(target_folder,
-                                            fs=args.fs,
-                                            start_pt=args.start_pt,
-                                            end_pt=args.end_pt,
-                                            still_pt=args.still_pt,
-                                            after_still_pt=args.after_still_pt,
-                                            pool=args.pool,
-                                            d=args.d,
-                                            window_size=args.window_size,
-                                            stride=args.stride,
-                                            nperseg=args.nperseg,
-                                            noverlap=args.noverlap,
-                                            out_1=args.out_1,
-                                            byCol=args.byCol,
-                                            features=args.features)
-        else:
-            spectrograms, gts = prepare_action_data(target_folder,
-                                            fs=args.fs,
-                                            start_pt=args.start_pt,
-                                            end_pt=args.end_pt,
-                                            still_pt=args.still_pt,
-                                            after_still_pt=args.after_still_pt,
-                                            pool=args.pool,
-                                            d=args.d,
-                                            window_size=args.window_size,
-                                            stride=args.stride,
-                                            nperseg=args.nperseg,
-                                            noverlap=args.noverlap,
-                                            out_1=args.out_1,
-                                            byCol=args.byCol,
-                                            features=args.features)
 
-        pickle.dump(
-            {'input': spectrograms, 'gt': gts},
-            open(f'{args.dataset_name}_{tp}.pkl', 'wb')
-        )
+    dataset = prepare_data(args.dataset_folder,
+                                    fs=args.fs,
+                                    start_pt=args.start_pt,
+                                    end_pt=args.end_pt,
+                                    still_pt=args.still_pt,
+                                    after_still_pt=args.after_still_pt,
+                                    pool=args.pool,
+                                    d=args.d,
+                                    window_size=args.window_size,
+                                    stride=args.stride,
+                                    nperseg=args.nperseg,
+                                    noverlap=args.noverlap,
+                                    out_1=args.out_1,
+                                    byCol=args.byCol,
+                                    features=args.features)
+    
+    pickle.dump(
+        dataset,
+        open(f'{args.dataset_name}.pkl', 'wb')
+    )
+    
+    # dataset_types = ['train', 'test']
+    # for tp in dataset_types:
+    #     target_folder = os.path.join(args.dataset_folder, tp)
+    #     print(f"target_folder: {target_folder}")
+    #     # files = os.listdir(target_folder)
+        
+    #     if not args.action:
+    #         spectrograms, gts = prepare_data(target_folder,
+    #                                         fs=args.fs,
+    #                                         start_pt=args.start_pt,
+    #                                         end_pt=args.end_pt,
+    #                                         still_pt=args.still_pt,
+    #                                         after_still_pt=args.after_still_pt,
+    #                                         pool=args.pool,
+    #                                         d=args.d,
+    #                                         window_size=args.window_size,
+    #                                         stride=args.stride,
+    #                                         nperseg=args.nperseg,
+    #                                         noverlap=args.noverlap,
+    #                                         out_1=args.out_1,
+    #                                         byCol=args.byCol,
+    #                                         features=args.features)
+    #     else:
+    #         spectrograms, gts = prepare_action_data(target_folder,
+    #                                         fs=args.fs,
+    #                                         start_pt=args.start_pt,
+    #                                         end_pt=args.end_pt,
+    #                                         still_pt=args.still_pt,
+    #                                         after_still_pt=args.after_still_pt,
+    #                                         pool=args.pool,
+    #                                         d=args.d,
+    #                                         window_size=args.window_size,
+    #                                         stride=args.stride,
+    #                                         nperseg=args.nperseg,
+    #                                         noverlap=args.noverlap,
+    #                                         out_1=args.out_1,
+    #                                         byCol=args.byCol,
+    #                                         features=args.features)
+
+    #     pickle.dump(
+    #         {'input': spectrograms, 'gt': gts},
+    #         open(f'{args.dataset_name}_{tp}.pkl', 'wb')
+    #     )
