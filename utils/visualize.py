@@ -30,6 +30,8 @@ def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y',
     # fig, axes = plt.subplots(row_num, len(titles), figsize=(20,10), constrained_layout=True)
     if overlap_only:
         row_num = 1
+    if overlap_only and show_gt:
+        row_num = 2
 
     fig = plt.figure(figsize=(15, 3 * row_num), layout="constrained")
     spec = fig.add_gridspec(row_num, len(titles))
@@ -71,7 +73,14 @@ def draw_imu_curve(imu_data, sensor_names=['imu1','imu2'], cols = ['q_x', 'q_y',
         ax.plot(time_ls, imu_data["Force"], color=colors[2])
         ax.set_title('Respiration GT Force')
         ax.set_ylabel('N')
-        legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))        
+        legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))  
+
+    if show_gt and overlap_only:
+        ax = fig.add_subplot(spec[1, :])
+        ax.plot(time_ls, imu_data["Force"], color=colors[2])
+        ax.set_title('Respiration GT Force')
+        ax.set_ylabel('N')
+        legend_handle_ls.append(Line2D([0], [0], label='Force', color=colors[2]))  
 
     # ax = fig.add_subplot(spec[4, :])
     # ax.plot(time_ls, imu_data["imu2_q_y"], color=colors[1])
@@ -678,7 +687,7 @@ def draw_learning_results(preds, gt, times, action_name, cols=['q_x', 'q_y', 'q_
 
     plt.plot(times[gt_ok_idx], gt[gt_ok_idx], marker="o", label='gt',)
     # plot mean of gt
-    plt.plot(times[gt_ok_idx], np.zeros_like(gt[gt_ok_idx]) + np.mean(gt[gt_ok_idx]), label='gt_mean')
+    # plt.plot(times[gt_ok_idx], np.zeros_like(gt[gt_ok_idx]) + np.mean(gt[gt_ok_idx]), label='gt_mean')
 
     for i, method in enumerate(preds):
         pred_ok_idx = np.where(preds[method] > 0)[0]
