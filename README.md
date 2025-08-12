@@ -12,7 +12,7 @@
 - Use ANC_action.ipynb # previous: whole_process.ipynb
 - Find order:
 ```
- python test_order.py -m 20 --visualize --dataset_name 17P
+python test_order.py -m 20 --visualize --dataset_name all --test m2 m5 m7 w1 w4
  ```
 
 ## Spectrogram + Learning base
@@ -36,3 +36,6 @@ python train.py --dataset_name 17P --model_name MLP_test --model_type MLP -b 8 -
 # 2-D Spectrogram (dataset:17P)
 python test.py --dataset_name 17P --model_name MLP_test --model_type MLP --features Q ANC --test m2 m5 m7 w1 w4
 ```
+
+## Other Papers' Work
+- Use paper.ipynb

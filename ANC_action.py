@@ -26,11 +26,9 @@ def parse_args():
     parser.add_argument("--d", type=float, default=0.05)
     parser.add_argument("--window_size", type=int, default=128)
     parser.add_argument("--stride", type=int, default=64)
-    parser.add_argument("--out_1", action='store_true')
 
-    # Type
-    parser.add_argument("--action", action='store_true')
-    
+    # Dataset
+    parser.add_argument('--test', nargs='+', default=['m2', 'm5', 'm7', 'w1', 'w4'])
     
     args = parser.parse_args()
     
@@ -38,8 +36,7 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    tp = "test"
-    target_folder = os.path.join(args.dataset_folder, tp)
+    target_folder = args.dataset_folder
     print(f"target_folder: {target_folder}")
 
     prepare_data_anc(target_folder,
@@ -51,4 +48,5 @@ if __name__ == '__main__':
                 pool=args.pool,
                 d=args.d,
                 window_size=args.window_size,
-                stride=args.stride,)
+                stride=args.stride,
+                test_set=args.test,)
