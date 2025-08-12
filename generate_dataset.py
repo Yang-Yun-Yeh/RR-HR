@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument("--still_pt", type=int, default=300)
     parser.add_argument("--after_still_pt", type=int, default=0)
     parser.add_argument("--pool", type=float, default=1.0)
-    parser.add_argument("--d", type=float, default=0.1)
+    parser.add_argument("--d", type=float, default=0.05)
     parser.add_argument("--window_size", type=int, default=128)
     parser.add_argument("--stride", type=int, default=64)
     parser.add_argument("--nperseg", type=int, default=128)
