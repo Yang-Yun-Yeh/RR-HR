@@ -81,6 +81,7 @@ if __name__ == '__main__':
         # model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=256, mlp_dim=512, num_heads=8, device=device, model_name=args.model_name) # emht2
 
         model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=64, mlp_dim=128, num_heads=2, num_layers=2, device=device, model_name=args.model_name) # s
+        # model = VT.ViTRegression(in_channels=num_channels, patch_size=(3, 3), emb_dim=128, mlp_dim=256, num_heads=4, num_layers=2, device=device, model_name=args.model_name) # VT_17P_32_emb128_mlp256_nl2
     
     # Train the model
     now = datetime.now()

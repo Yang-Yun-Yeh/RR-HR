@@ -12,7 +12,7 @@ except:
      import signal_process as sp
      import visualize as vs
 
-def compute_file(data, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
+def compute_file(data, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False, align=True):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     omega_axes = ['omega_u', 'omega_v', 'omega_w']
@@ -43,15 +43,17 @@ def compute_file(data, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, e
     data["Timestamp"] = pd.to_datetime(data["Timestamp"])
     data = data.set_index("Timestamp")
 
-    # align IMU
-    q_corr = sp.Q_RANSAC(data[0:still_pt], pool=pool, d=d)
-    target, skew = 'imu1', 'imu2'
-    Q_skew = data[[skew + '_q_x', skew + '_q_y', skew + '_q_z', skew + '_q_w']].to_numpy()
-    Q_aligned = sp.align_quaternion(q_corr, Q_skew) # (sample num, 4)
-    data_aligned = data.copy()
+    if align: # align IMU
+        q_corr = sp.Q_RANSAC(data[0:still_pt], pool=pool, d=d)
+        target, skew = 'imu1', 'imu2'
+        Q_skew = data[[skew + '_q_x', skew + '_q_y', skew + '_q_z', skew + '_q_w']].to_numpy()
+        Q_aligned = sp.align_quaternion(q_corr, Q_skew) # (sample num, 4)
+        data_aligned = data.copy()
 
-    for i, col in enumerate(cols):
-        data_aligned[[skew + '_' + col]] = Q_aligned[:, i].reshape(-1, 1)
+        for i, col in enumerate(cols):
+            data_aligned[[skew + '_' + col]] = Q_aligned[:, i].reshape(-1, 1)
+    else:
+        data_aligned = data.copy()
 
     # specify data range
     data_sml = data_aligned.copy() # data used in sml
@@ -123,7 +125,7 @@ def compute_file(data, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, e
 
     return segmented_spectrograms, segmented_gt, times, feature_index
 
-def prepare_file(file, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
+def prepare_file(file, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False, align=True):
     spectrograms, gts, times = [], [], []
 
     # load data
@@ -142,7 +144,7 @@ def prepare_file(file, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_
         "RR",
     ]
 
-    segmented_spectrograms, segmented_gt, times, feature_index = compute_file(data, features=features, start_pt=start_pt, end_pt=end_pt, still_pt=still_pt, after_still_pt=after_still_pt, pool=pool, d=d, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1, byCol=byCol)
+    segmented_spectrograms, segmented_gt, times, _ = compute_file(data, features=features, start_pt=start_pt, end_pt=end_pt, still_pt=still_pt, after_still_pt=after_still_pt, pool=pool, d=d, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1, byCol=byCol, align=align)
 
     spectrograms.append(segmented_spectrograms)
     gts.append(segmented_gt)
@@ -157,7 +159,7 @@ def prepare_file(file, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_
 
     return spectrograms, gts, times
 
-def prepare_data(dir, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False):
+def prepare_data(dir, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False, align=True):
     dataset = {}
     feature_index = None
 
@@ -191,7 +193,7 @@ def prepare_data(dir, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_p
                     "RR",
                 ]
 
-                segmented_spectrograms, segmented_gt, times, feature_index = compute_file(data, features=features, start_pt=start_pt, end_pt=end_pt, still_pt=still_pt, after_still_pt=after_still_pt, pool=pool, d=d, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1, byCol=byCol)
+                segmented_spectrograms, segmented_gt, times, feature_index = compute_file(data, features=features, start_pt=start_pt, end_pt=end_pt, still_pt=still_pt, after_still_pt=after_still_pt, pool=pool, d=d, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1, byCol=byCol, align=align)
                 feature_index = feature_index
                 
                 dataset[person_name].append({'action': action_name,
