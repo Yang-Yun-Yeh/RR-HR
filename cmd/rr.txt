@@ -213,7 +213,23 @@ python train.py --dataset_name 17P_Q+ANC --model_name VT_17P_Q+ANC_emt2 --model_
 python train.py --dataset_name 17P_Q+ANC --model_name VT_17P_Q+ANC_emht2 --model_type VT -b 8 --visualize
 python train.py --dataset_name 17P_Q+ANC --model_name VT_17P_Q+ANC_s --model_type VT -b 8 --visualize
 
-# 17P
+# 17P (new data structure)
 python generate_dataset.py -f data/all -n dataset/17P --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2 ANC
 python train.py --dataset_name 17P --model_name test --model_type MLP -b 8 --visualize --features Q ANC --test m2 m5 m7 w1 w4
 python test.py --dataset_name 17P --model_name VT_17P_Q+ANC_s --model_type VT --features Q ANC --test m2 m5 m7 w1 w4
+
+# 17PR (not align)
+python generate_dataset.py -f data/all -n dataset/17PR --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2 ANC --not_align
+python train.py --dataset_name 17PR --model_name MLP_test --model_type MLP -b 8 --visualize --features Q --test m2 m5 m7 w1 w4
+python test.py --dataset_name 17PR --model_name MLP_test --model_type MLP --features Q --test m2 m5 m7 w1 w4
+
+# 17PR_Q
+python train.py --dataset_name 17PR --model_name MLP_17PR_Q --model_type MLP -b 8 --visualize --features Q --test m2 m5 m7 w1 w4
+python train.py --dataset_name 17PR --model_name CNN_17PR_Q --model_type CNN -b 8 --visualize --features Q --test m2 m5 m7 w1 w4
+python train.py --dataset_name 17PR --model_name VT_17PR_Q_emb128_mlp256_nl2 --model_type VT -b 8 --visualize --features Q --test m2 m5 m7 w1 w4
+python train.py --dataset_name 17PR --model_name VT_17PR_Q_s --model_type VT -b 8 --visualize --features Q --test m2 m5 m7 w1 w4
+
+# 17PR_16
+python train.py --dataset_name 17PR --model_name MLP_17PR_16 --model_type MLP -b 8 --visualize --features Q omega omega_l2 --test m2 m5 m7 w1 w4
+python train.py --dataset_name 17PR --model_name CNN_17PR_16 --model_type CNN -b 8 --visualize --features Q omega omega_l2 --test m2 m5 m7 w1 w4
+python train.py --dataset_name 17PR --model_name VT_17PR_16_s --model_type VT -b 8 --visualize --features Q omega omega_l2 --test m2 m5 m7 w1 w4

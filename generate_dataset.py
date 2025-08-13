@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument("--byCol", action='store_true')
     # parser.add_argument("--sp_num", type=int, default=16)
     parser.add_argument('--features', nargs='+', default=['Q', 'omega', 'omega_l2', 'ANC'])
+    parser.add_argument("--not_align", action='store_false')
 
     # Type
     parser.add_argument("--action", action='store_true')
@@ -40,20 +41,21 @@ if __name__ == '__main__':
     args = parse_args()
 
     dataset = prepare_data(args.dataset_folder,
-                                    fs=args.fs,
-                                    start_pt=args.start_pt,
-                                    end_pt=args.end_pt,
-                                    still_pt=args.still_pt,
-                                    after_still_pt=args.after_still_pt,
-                                    pool=args.pool,
-                                    d=args.d,
-                                    window_size=args.window_size,
-                                    stride=args.stride,
-                                    nperseg=args.nperseg,
-                                    noverlap=args.noverlap,
-                                    out_1=args.out_1,
-                                    byCol=args.byCol,
-                                    features=args.features)
+                            fs=args.fs,
+                            start_pt=args.start_pt,
+                            end_pt=args.end_pt,
+                            still_pt=args.still_pt,
+                            after_still_pt=args.after_still_pt,
+                            pool=args.pool,
+                            d=args.d,
+                            window_size=args.window_size,
+                            stride=args.stride,
+                            nperseg=args.nperseg,
+                            noverlap=args.noverlap,
+                            out_1=args.out_1,
+                            byCol=args.byCol,
+                            features=args.features,
+                            align=args.not_align,)
     
     pickle.dump(
         dataset,
