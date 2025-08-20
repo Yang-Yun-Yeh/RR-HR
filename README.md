@@ -37,5 +37,21 @@ python train.py --dataset_name 17P --model_name MLP_test --model_type MLP -b 8 -
 python test.py --dataset_name 17P --model_name MLP_test --model_type MLP --features Q ANC --test m2 m5 m7 w1 w4
 ```
 
+## Label GT Respiratory Peaks by Human
+```
+# How to use label_gt.py (show usage flag)
+python label_gt.py --help
+
+# Label peaks (default)
+python label_gt.py
+
+# Label peaks (overwrite files which had been labelled before)
+python label_gt.py --overwrite
+```
+```
+# Test RR gt (prediction line doesn't matter)
+python test_gt.py
+```
+
 ## Other Papers' Work
 - Use paper.ipynb

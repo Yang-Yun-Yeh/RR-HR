@@ -12,7 +12,7 @@ except:
      import signal_process as sp
      import visualize as vs
 
-def compute_file(data, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False, align=True):
+def compute_file(data, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False, align=True, labelled_path='./dataset/gt/all.pkl', file_name=None):
     sensor_names=['imu1','imu2']
     cols = ['q_x', 'q_y', 'q_z', 'q_w']
     omega_axes = ['omega_u', 'omega_v', 'omega_w']
@@ -97,7 +97,7 @@ def compute_file(data, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, e
     Q = data_sml[features_cols].values
     # print(f"features_cols:{features_cols}")
     # print(f'Q.shape:{Q.shape}')
-    segmented_spectrograms, segmented_gt, times = sp.segment_data(Q, data_sml["Force"], return_t=True, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1)
+    segmented_spectrograms, segmented_gt, times = sp.segment_data(Q, data_sml["Force"], return_t=True, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1, labelled_path=labelled_path, file_name=file_name)
 
     # segmented_spectrograms: (num_windows, num_spectrograms, freq_bins, time_steps)
     # min-Max normalization
@@ -125,7 +125,7 @@ def compute_file(data, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, e
 
     return segmented_spectrograms, segmented_gt, times, feature_index
 
-def prepare_file(file, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False, align=True):
+def prepare_file(file, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False, align=True, labelled_path='./dataset/gt/all.pkl', file_name=None):
     spectrograms, gts, times = [], [], []
 
     # load data
@@ -144,7 +144,7 @@ def prepare_file(file, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_
         "RR",
     ]
 
-    segmented_spectrograms, segmented_gt, times, _ = compute_file(data, features=features, start_pt=start_pt, end_pt=end_pt, still_pt=still_pt, after_still_pt=after_still_pt, pool=pool, d=d, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1, byCol=byCol, align=align)
+    segmented_spectrograms, segmented_gt, times, _ = compute_file(data, features=features, start_pt=start_pt, end_pt=end_pt, still_pt=still_pt, after_still_pt=after_still_pt, pool=pool, d=d, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1, byCol=byCol, align=align, labelled_path=labelled_path, file_name=file_name)
 
     spectrograms.append(segmented_spectrograms)
     gts.append(segmented_gt)
@@ -159,7 +159,7 @@ def prepare_file(file, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_
 
     return spectrograms, gts, times
 
-def prepare_data(dir, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False, align=True):
+def prepare_data(dir, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_pt=0, end_pt=-1, still_pt=300, after_still_pt=0, pool=1.0, d=0.05, window_size=128, stride=64, nperseg=128, noverlap=64, out_1=False, byCol=False, align=True, labelled_path='./dataset/gt/all.pkl'):
     dataset = {}
     feature_index = None
 
@@ -193,7 +193,7 @@ def prepare_data(dir, fs=10, features=['Q', 'omega', 'omega_l2', 'ANC'], start_p
                     "RR",
                 ]
 
-                segmented_spectrograms, segmented_gt, times, feature_index = compute_file(data, features=features, start_pt=start_pt, end_pt=end_pt, still_pt=still_pt, after_still_pt=after_still_pt, pool=pool, d=d, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1, byCol=byCol, align=align)
+                segmented_spectrograms, segmented_gt, times, feature_index = compute_file(data, features=features, start_pt=start_pt, end_pt=end_pt, still_pt=still_pt, after_still_pt=after_still_pt, pool=pool, d=d, window_size=window_size, stride=stride, nperseg=nperseg, noverlap=noverlap, out_1=out_1, byCol=byCol, align=align, labelled_path=labelled_path, file_name=filename)
                 feature_index = feature_index
                 
                 dataset[person_name].append({'action': action_name,

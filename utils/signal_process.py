@@ -3,6 +3,8 @@ from scipy import signal as sg
 from scipy.spatial.transform import Rotation as R
 import statsmodels.api as sm
 from sklearn.metrics import r2_score
+import os
+import pickle
 
 try:
      from . import visualize as vs
@@ -411,11 +413,36 @@ def compute_gt(force_seg, fs=10, nperseg=128, noverlap=64, start_t=0, return_t=F
         return gt['freq']
     else:
         return gt['freq'], times
+    
+def gt_labelled_to_rr(gt_file):
+    gt_labelled_rr = np.zeros(gt_file['file_len'])
+    peaks_t, peaks_i = gt_file['peaks_t'], gt_file['peaks_i']
+
+    # First 2 peaks
+    gt_labelled_rr[:peaks_i[1]] = 1 / (peaks_t[1] - peaks_t[0])
+
+    # Other peaks
+    for i in range(1, len(peaks_i) - 2):
+        gt_labelled_rr[peaks_i[i]:peaks_i[i+1]] = 1 / (peaks_t[i+1] - peaks_t[i])
+
+    # Last 2 peaks
+    gt_labelled_rr[peaks_i[-2]:] = 1 / (peaks_t[-1] - peaks_t[-2])
+
+    return gt_labelled_rr
+    
+def compute_gt_labelled(gt_file_rr, delay=10, still_pt=300, fs=10, window_size=256, start_t=0, return_t=False):
+    gt = [np.mean(gt_file_rr[int(start_t + delay*fs + still_pt): int(start_t + delay*fs + still_pt + window_size)])]
+    time = [((start_t + window_size) / 2) / fs]
+
+    if not return_t:
+        return gt
+    else:
+        return gt, time
 
 # window_size=1000, stride=500
 # window_size=512, stride=256
 # window_size=1024, stride=256
-def segment_data(imu_data, force, window_size=128, stride=64, nperseg=128, noverlap=64, fs=10, return_t=False, out_1=False):
+def segment_data(imu_data, force, window_size=128, stride=64, nperseg=128, noverlap=64, fs=10, return_t=False, out_1=False, labelled_path='./dataset/gt/all.pkl', file_name=None):
     """
     Create spectrogram windows from IMU data.
 
@@ -434,6 +461,16 @@ def segment_data(imu_data, force, window_size=128, stride=64, nperseg=128, nover
     gts = []
     t_ls = []
 
+    if os.path.exists(labelled_path) and file_name is not None:
+        gt_labelled = pickle.load(open(labelled_path, 'rb'))
+        if file_name in gt_labelled:
+            gt_file = gt_labelled[file_name]
+            gt_file_rr = gt_labelled_to_rr(gt_file)
+        else:
+            gt_file_rr = None
+    else:
+        gt_file_rr = None
+
     for start in range(0, num_samples - window_size, stride):
         window_q = imu_data[start:start + window_size, :]
         window_force = force[start:start + window_size]
@@ -442,6 +479,10 @@ def segment_data(imu_data, force, window_size=128, stride=64, nperseg=128, nover
             gt, t = compute_gt(window_force, nperseg=nperseg, noverlap=noverlap, start_t=start, return_t=True)
         else:
             gt, t = compute_gt(window_force, nperseg=window_size, noverlap=0, start_t=start, return_t=True)
+
+        if gt_file_rr is not None:
+            gt, t = compute_gt_labelled(gt_file_rr, window_size=window_size, start_t=start, return_t=True)
+
         windows.append(spectrograms)
         gts.append(gt)
         t_ls.append(t)
