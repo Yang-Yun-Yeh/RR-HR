@@ -21,12 +21,14 @@ command:
 # ANC
 python ANC_action.py -f data/all --window_size 256 --stride 64 --test m2 m5 m7 w1 w4
 
-#order
+# ANC find order
 python test_order.py -m 20 --visualize --dataset_name all --test m2 m5 m7 w1 w4
 python test_order.py -m 20 --visualize --dataset_name order
 python test_order.py -m 50 --visualize
 
-
+# Label gt
+python label_gt.py
+python label_gt.py --overwrite
 
 # hamham
 python generate_dataset.py -f data/hamham -n dataset/hamham
