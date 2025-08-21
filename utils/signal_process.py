@@ -432,7 +432,7 @@ def gt_labelled_to_rr(gt_file):
     
 def compute_gt_labelled(gt_file_rr, delay=10, still_pt=300, fs=10, window_size=256, start_t=0, return_t=False):
     gt = [np.mean(gt_file_rr[int(start_t + delay*fs + still_pt): int(start_t + delay*fs + still_pt + window_size)])]
-    time = [((start_t + window_size) / 2) / fs]
+    time = [((start_t + start_t + + window_size) / 2) / fs]
 
     if not return_t:
         return gt
@@ -482,6 +482,7 @@ def segment_data(imu_data, force, window_size=128, stride=64, nperseg=128, nover
 
         if gt_file_rr is not None:
             gt, t = compute_gt_labelled(gt_file_rr, window_size=window_size, start_t=start, return_t=True)
+            # print('labell gt')
 
         windows.append(spectrograms)
         gts.append(gt)
