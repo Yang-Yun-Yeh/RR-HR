@@ -27,8 +27,9 @@ python test_order.py -m 20 --visualize --dataset_name order
 python test_order.py -m 50 --visualize
 
 # Label gt
-python label_gt.py
+python label_gt.py -n
 python label_gt.py --overwrite
+python label_gt.py -n test
 
 # hamham
 python generate_dataset.py -f data/hamham -n dataset/hamham
@@ -235,3 +236,6 @@ python train.py --dataset_name 17PR --model_name VT_17PR_Q_s --model_type VT -b 
 python train.py --dataset_name 17PR --model_name MLP_17PR_16 --model_type MLP -b 8 --visualize --features Q omega omega_l2 --test m2 m5 m7 w1 w4
 python train.py --dataset_name 17PR --model_name CNN_17PR_16 --model_type CNN -b 8 --visualize --features Q omega omega_l2 --test m2 m5 m7 w1 w4
 python train.py --dataset_name 17PR --model_name VT_17PR_16_s --model_type VT -b 8 --visualize --features Q omega omega_l2 --test m2 m5 m7 w1 w4
+
+# 17P (test)
+python generate_dataset.py -f data/all -n dataset/17_test --window_size 256 --stride 64 --nperseg 128 --noverlap 64 --out_1 --byCol --features Q omega omega_l2 ANC
